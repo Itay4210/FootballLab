@@ -3,17 +3,17 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Match, MatchSchema } from './schemas/match.schema';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
-import { TeamsModule } from '../teams/teams.module';     // 👈 ייבוא הקבוצות
-import { LeaguesModule } from '../leagues/leagues.module'; // 👈 ייבוא הליגות
+import { TeamsModule } from '../teams/teams.module';
+import { LeaguesModule } from '../leagues/leagues.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Match.name, schema: MatchSchema }]),
-    TeamsModule,   // כדי לשלוף קבוצות
-    LeaguesModule, // כדי לשלוף ליגות
+    TeamsModule,
+    LeaguesModule,
   ],
   controllers: [MatchesController],
   providers: [MatchesService],
-  exports: [MatchesService],
+  exports: [MatchesService, MongooseModule],
 })
 export class MatchesModule {}

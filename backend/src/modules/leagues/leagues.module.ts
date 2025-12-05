@@ -10,6 +10,6 @@ import { LeaguesService } from './leagues.service';
   ],
   controllers: [LeaguesController],
   providers: [LeaguesService],
-  exports: [MongooseModule], // 👈 חשוב לעתיד
+  exports: [MongooseModule],
 })
 export class LeaguesModule {}

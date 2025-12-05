@@ -3,7 +3,6 @@ import { Document, Types } from 'mongoose';
 
 export type PlayerDocument = Player & Document;
 
-// הגדרת העמדות המדויקות בכדורגל
 export enum PlayerPosition {
   GK = 'GK',
   CB = 'CB', LB = 'LB', RB = 'RB',
@@ -19,7 +18,7 @@ export class Player {
   @Prop({ required: true })
   age: number;
 
-  @Prop({ required: true, enum: PlayerPosition }) // הגבלנו לרשימה הסגורה
+  @Prop({ required: true, enum: PlayerPosition })
   position: string; 
 
   @Prop({ required: true })
@@ -31,7 +30,6 @@ export class Player {
   @Prop({ default: 100000 })
   marketValue: number;
 
-  // 👇 התיקון הגדול שלך כאן: הפרדת כרטיסים
   @Prop({
     type: Object,
     default: { goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 }
@@ -40,8 +38,8 @@ export class Player {
     goals: number;
     assists: number;
     matches: number;
-    yellowCards: number; // 🟨
-    redCards: number;    // 🟥
+    yellowCards: number;
+    redCards: number;
   };
 }
 

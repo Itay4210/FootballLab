@@ -1,0 +1,29 @@
+# General
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# Backend (NestJS)
+backend/dist/
+backend/coverage/
+backend/test-report.xml
+
+# Frontend (Vite/React)
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
+frontend/coverage/
+frontend/*.local
+

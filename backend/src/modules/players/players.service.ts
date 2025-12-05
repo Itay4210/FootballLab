@@ -8,16 +8,13 @@ import { Team, TeamDocument } from '../teams/schemas/team.schema';
 export class PlayersService {
   constructor(
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
-    @InjectModel(Team.name) private teamModel: Model<TeamDocument>, // 👈 הזרקנו גם את מודל הקבוצות!
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
   ) {}
 
   async findAll() {
-    return this.playerModel.find().populate('teamId', 'name').exec(); // populate מביא את שם הקבוצה במקום רק ID
+    return this.playerModel.find().populate('teamId', 'name').exec();
   }
 
-  // 🌱 ה-Seed החכם
-   // 🌱 ה-Seed החכם והמוקפד (ללא any)
-  // 🌱 Seed סופר-מפורט: 25 שחקנים לקבוצה בעמדות מדויקות
   async seed() {
     const playerCount = await this.playerModel.countDocuments();
     if (playerCount > 0) return { message: 'Players already exist' };
@@ -27,42 +24,39 @@ export class PlayersService {
 
     const playersToInsert: Partial<Player>[] = [];
 
-    // הגדרת הרכב סגל מאוזן (סה"כ 25 שחקנים)
     const SQUAD_DISTRIBUTION = [
-      { pos: 'GK', count: 3 },  // 3 שוערים
-      { pos: 'CB', count: 4 },  // 4 בלמים
-      { pos: 'LB', count: 2 },  // 2 מגנים שמאליים
-      { pos: 'RB', count: 2 },  // 2 מגנים ימניים
-      { pos: 'CDM', count: 2 }, // 2 קשרים אחוריים
-      { pos: 'CM', count: 4 },  // 4 קשרי אמצע
-      { pos: 'CAM', count: 2 }, // 2 קשרים התקפיים
-      { pos: 'LW', count: 2 },  // 2 קיצוני שמאל
-      { pos: 'RW', count: 2 },  // 2 קיצוני ימין
-      { pos: 'ST', count: 2 },  // 2 חלוצים
+      { pos: 'GK', count: 3 },
+      { pos: 'CB', count: 4 },
+      { pos: 'LB', count: 2 },
+      { pos: 'RB', count: 2 },
+      { pos: 'CDM', count: 2 },
+      { pos: 'CM', count: 4 },
+      { pos: 'CAM', count: 2 },
+      { pos: 'LW', count: 2 },
+      { pos: 'RW', count: 2 },
+      { pos: 'ST', count: 2 },
     ];
 
-    console.log('Starting massive player seed...'); // לוג כדי שנדע שזה עובד
+    console.log('Starting massive player seed...');
 
     for (const team of teams) {
       
       for (const role of SQUAD_DISTRIBUTION) {
         for (let i = 1; i <= role.count; i++) {
           
-          // חישוב שווי שוק גס לפי עמדה (חלוצים שווים יותר בדר"כ)
           let baseValue = 1000000;
           if (role.pos === 'ST' || role.pos === 'CAM') baseValue = 3000000;
           if (role.pos === 'GK') baseValue = 500000;
 
-          // רנדומליות לגיל (18-36)
           const age = Math.floor(Math.random() * 18) + 18;
 
           playersToInsert.push({
-            name: `${team.name} ${role.pos} ${i}`, // למשל: Real Madrid CB 1
+            name: `${team.name} ${role.pos} ${i}`,
             age: age,
             position: role.pos,
             nationality: team.country,
             teamId: team._id,
-            marketValue: baseValue * (Math.random() + 0.5), // קצת רנדומליות במחיר
+            marketValue: baseValue * (Math.random() + 0.5),
             seasonStats: {
                goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 
             }
@@ -71,7 +65,6 @@ export class PlayersService {
       }
     }
 
-    // בגלל שיש 2500 שחקנים, נכניס אותם במכה אחת
     await this.playerModel.insertMany(playersToInsert);
     
     return { 

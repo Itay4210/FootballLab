@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 
 export type TeamDocument = Team & Document;
 
-@Schema({ timestamps: true }) // מוסיף אוטומטית תאריך יצירה ועדכון
+@Schema({ timestamps: true })
 export class Team {
   @Prop({ required: true })
   name: string;
@@ -17,11 +17,9 @@ export class Team {
   @Prop({ required: true })
   stadium: string;
 
-  // 🔗 קשר לליגה (נבנה את זה בהמשך)
   @Prop({ type: Types.ObjectId, ref: 'League', required: false }) 
   leagueId: Types.ObjectId;
 
-  // ⚔️ נתונים למנוע הסימולציה
   @Prop({ default: 5, min: 1, max: 10 })
   attackStrength: number;
 
@@ -29,9 +27,8 @@ export class Team {
   defenseStrength: number;
 
   @Prop({ default: 50, min: 0, max: 100 })
-  morale: number; // 0-100 (משתנה אחרי ניצחונות/הפסדים)
+  morale: number;
 
-  // 📊 טבלה פנימית (Snapshot) לעונה הנוכחית
   @Prop({
     type: Object,
     default: { points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 }

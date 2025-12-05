@@ -17,9 +17,7 @@ export class MatchesService {
     return this.matchModel.find().exec();
   }
 
-  // 🔥 יצירת לוח משחקים מלא לכל העונה
   async seed() {
-    // בדיקה אם כבר יש משחקים
     const count = await this.matchModel.countDocuments();
     if (count > 0) return { message: 'Matches already exist!' };
 
@@ -27,17 +25,14 @@ export class MatchesService {
     const allMatchesToInsert: Partial<Match>[] = [];
 
     for (const league of leagues) {
-      // 1. נביא את כל הקבוצות של הליגה הזו
       const teams = await this.teamModel.find({ leagueId: league._id }).exec();
       
-      if (teams.length < 2) continue; // אי אפשר ליצור ליגה עם קבוצה אחת
+      if (teams.length < 2) continue; 
 
-      // 2. הפעלת אלגוריתם Round Robin
       const fixtures = this.generateRoundRobin(teams, league._id);
       allMatchesToInsert.push(...fixtures);
     }
 
-    // 3. שמירה מרוכזת (Bulk Insert)
     await this.matchModel.insertMany(allMatchesToInsert);
     
     return { 
@@ -45,24 +40,21 @@ export class MatchesService {
     };
   }
 
-  // 🧠 האלגוריתם המתמטי לסידור ליגה
   private generateRoundRobin(teams: TeamDocument[], leagueId: any): Partial<Match>[] {
     const matches: Partial<Match>[] = [];
     const numTeams = teams.length;
-    const numRounds = (numTeams - 1) * 2; // בית וחוץ
+    const numRounds = (numTeams - 1) * 2; 
     const matchesPerRound = numTeams / 2;
 
-    // יוצרים מערך IDs לסיבוב
     let rotation = teams.map(t => t._id);
 
     for (let round = 0; round < numRounds; round++) {
-      const isSecondHalf = round >= (numTeams - 1); // סיבוב שני (משחקי הגומלין)
+      const isSecondHalf = round >= (numTeams - 1); 
 
       for (let i = 0; i < matchesPerRound; i++) {
         const home = rotation[i];
         const away = rotation[numTeams - 1 - i];
 
-        // בסיבוב השני הופכים בית/חוץ
         matches.push({
           leagueId: leagueId,
           matchday: round + 1,
@@ -75,12 +67,9 @@ export class MatchesService {
         });
       }
 
-      // 🔄 רוטציה של הקבוצות למחזור הבא
-      // משאירים את האינדקס הראשון קבוע, ומסובבים את השאר
-      // [0, 1, 2, 3] -> [0, 3, 1, 2]
       const fixedTeam = rotation[0];
       const rest = rotation.slice(1);
-      rest.unshift(rest.pop()!); // מעבירים את האחרון להתחלה
+      rest.unshift(rest.pop()!); 
       rotation = [fixedTeam, ...rest];
     }
 

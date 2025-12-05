@@ -6,16 +6,16 @@ export type MatchDocument = Match & Document;
 @Schema()
 export class MatchEvent {
   @Prop({ required: true })
-  minute: number; // דקה 1-90
+  minute: number;
 
   @Prop({ required: true, enum: ['goal', 'yellowCard', 'redCard', 'substitution', 'injury'] })
   type: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Player', required: true })
-  playerId: Types.ObjectId; // מי ביצע את האירוע
+  playerId: Types.ObjectId;
 
   @Prop()
-  description: string; // טקסט חופשי (למשל: "בעיטה נהדרת לחיבורים")
+  description: string;
 }
 
 @Schema({ timestamps: true })
@@ -24,7 +24,7 @@ export class Match {
   leagueId: Types.ObjectId;
 
   @Prop({ required: true })
-  matchday: number; // מחזור מספר X
+  matchday: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Team', required: true })
   homeTeam: Types.ObjectId;
@@ -41,14 +41,12 @@ export class Match {
   @Prop({ required: true, enum: ['scheduled', 'finished'], default: 'scheduled' })
   status: string;
 
-  // 📜 רשימת האירועים במשחק (חשוב מאוד לסימולציה)
   @Prop({ type: [SchemaFactory.createForClass(MatchEvent)], default: [] })
   events: MatchEvent[];
 
-  // 📊 סטטיסטיקות משחק (בשביל ה-AI אחר כך)
   @Prop({ type: Object, default: { possession: 50, shots: 0, shotsOnTarget: 0 } })
   stats: {
-    possession: number; // אחוז החזקת כדור
+    possession: number;
     shots: number;
     shotsOnTarget: number;
   };

@@ -11,7 +11,6 @@ export class LeaguesService {
     return this.leagueModel.find().exec();
   }
 
-  // 🌱 יצירת 5 הליגות הגדולות
   async seed() {
     const count = await this.leagueModel.countDocuments();
     if (count > 0) return { message: 'Leagues already exist' };
@@ -22,7 +21,6 @@ export class LeaguesService {
       { name: 'Bundesliga', country: 'Germany' },
       { name: 'Serie A', country: 'Italy' },
       { name: 'Ligue 1', country: 'France' },
-      // בונוס: ליגת האלופות
       { name: 'Champions League', country: 'Europe' },
     ];
 
