@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Team, TeamDocument } from './schemas/team.schema';
-import { League, LeagueDocument } from '../leagues/schemas/league.schema';
+import { League, LeagueDocument } from '../leagues/schemas/league.schema'; 
 
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
-    @InjectModel(League.name) private leagueModel: Model<LeagueDocument>,
+    @InjectModel(League.name) private leagueModel: Model<LeagueDocument>, 
   ) {}
 
   async findAll() {
@@ -36,11 +36,11 @@ export class TeamsService {
       const leagueTeamNames = [...(realTeams[league.country] || [])];
       
       for (let i = leagueTeamNames.length + 1; i <= 20; i++) {
-        leagueTeamNames.push(`${league.country} Club ${i}`);
+        leagueTeamNames.push(`${league.country} Club ${i}`); 
       }
 
       for (const teamName of leagueTeamNames) {
-        const baseStr = Math.floor(Math.random() * 5) + 5;
+        const baseStr = Math.floor(Math.random() * 5) + 5; 
 
         teamsToInsert.push({
           name: teamName,

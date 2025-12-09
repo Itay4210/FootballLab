@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose'; 
 import { Match, MatchDocument } from './schemas/match.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
@@ -29,7 +29,7 @@ export class MatchesService {
       
       if (teams.length < 2) continue; 
 
-      const fixtures = this.generateRoundRobin(teams, league._id);
+      const fixtures = this.generateRoundRobin(teams, league._id as Types.ObjectId);
       allMatchesToInsert.push(...fixtures);
     }
 
@@ -40,13 +40,13 @@ export class MatchesService {
     };
   }
 
-  private generateRoundRobin(teams: TeamDocument[], leagueId: any): Partial<Match>[] {
+  private generateRoundRobin(teams: TeamDocument[], leagueId: Types.ObjectId): Partial<Match>[] {
     const matches: Partial<Match>[] = [];
     const numTeams = teams.length;
     const numRounds = (numTeams - 1) * 2; 
     const matchesPerRound = numTeams / 2;
 
-    let rotation = teams.map(t => t._id);
+    let rotation: Types.ObjectId[] = teams.map(t => t._id as Types.ObjectId);
 
     for (let round = 0; round < numRounds; round++) {
       const isSecondHalf = round >= (numTeams - 1); 
@@ -69,7 +69,12 @@ export class MatchesService {
 
       const fixedTeam = rotation[0];
       const rest = rotation.slice(1);
-      rest.unshift(rest.pop()!); 
+      
+      const lastTeam = rest.pop();
+      if (lastTeam) {
+        rest.unshift(lastTeam);
+      }
+      
       rotation = [fixedTeam, ...rest];
     }
 

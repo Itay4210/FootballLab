@@ -8,11 +8,11 @@ import { Team, TeamDocument } from '../teams/schemas/team.schema';
 export class PlayersService {
   constructor(
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
-    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>, 
   ) {}
 
   async findAll() {
-    return this.playerModel.find().populate('teamId', 'name').exec();
+    return this.playerModel.find().populate('teamId', 'name').exec(); 
   }
 
   async seed() {
@@ -25,19 +25,18 @@ export class PlayersService {
     const playersToInsert: Partial<Player>[] = [];
 
     const SQUAD_DISTRIBUTION = [
-      { pos: 'GK', count: 3 },
-      { pos: 'CB', count: 4 },
-      { pos: 'LB', count: 2 },
-      { pos: 'RB', count: 2 },
-      { pos: 'CDM', count: 2 },
-      { pos: 'CM', count: 4 },
-      { pos: 'CAM', count: 2 },
-      { pos: 'LW', count: 2 },
-      { pos: 'RW', count: 2 },
-      { pos: 'ST', count: 2 },
+      { pos: 'GK', count: 3 },  
+      { pos: 'CB', count: 4 },  
+      { pos: 'LB', count: 2 },  
+      { pos: 'RB', count: 2 },  
+      { pos: 'CDM', count: 2 }, 
+      { pos: 'CM', count: 4 },  
+      { pos: 'CAM', count: 2 }, 
+      { pos: 'LW', count: 2 },  
+      { pos: 'RW', count: 2 },  
+      { pos: 'ST', count: 2 },  
     ];
 
-    console.log('Starting massive player seed...');
 
     for (const team of teams) {
       
@@ -51,12 +50,12 @@ export class PlayersService {
           const age = Math.floor(Math.random() * 18) + 18;
 
           playersToInsert.push({
-            name: `${team.name} ${role.pos} ${i}`,
+            name: `${team.name} ${role.pos} ${i}`, 
             age: age,
             position: role.pos,
             nationality: team.country,
             teamId: team._id,
-            marketValue: baseValue * (Math.random() + 0.5),
+            marketValue: baseValue * (Math.random() + 0.5), 
             seasonStats: {
                goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 
             }

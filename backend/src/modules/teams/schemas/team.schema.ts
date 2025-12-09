@@ -3,7 +3,7 @@ import { Document, Types } from 'mongoose';
 
 export type TeamDocument = Team & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true }) 
 export class Team {
   @Prop({ required: true })
   name: string;
@@ -27,13 +27,14 @@ export class Team {
   defenseStrength: number;
 
   @Prop({ default: 50, min: 0, max: 100 })
-  morale: number;
+  morale: number; 
 
   @Prop({
     type: Object,
-    default: { points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 }
+    default: {matches: 0, points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 }
   })
   seasonStats: {
+    matches: number;
     points: number;
     wins: number;
     draws: number;

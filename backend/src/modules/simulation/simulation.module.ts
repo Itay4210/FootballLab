@@ -7,9 +7,9 @@ import { PlayersModule } from '../players/players.module';
 
 @Module({
   imports: [
-    MatchesModule,
-    TeamsModule,
-    PlayersModule,
+    MatchesModule, 
+    TeamsModule,   
+    PlayersModule, 
   ],
   controllers: [SimulationController],
   providers: [SimulationService],

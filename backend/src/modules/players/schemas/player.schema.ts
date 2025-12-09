@@ -18,7 +18,7 @@ export class Player {
   @Prop({ required: true })
   age: number;
 
-  @Prop({ required: true, enum: PlayerPosition })
+  @Prop({ required: true, enum: PlayerPosition }) 
   position: string; 
 
   @Prop({ required: true })
@@ -38,8 +38,8 @@ export class Player {
     goals: number;
     assists: number;
     matches: number;
-    yellowCards: number;
-    redCards: number;
+    yellowCards: number; 
+    redCards: number;    
   };
 }
 

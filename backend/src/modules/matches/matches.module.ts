@@ -3,14 +3,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Match, MatchSchema } from './schemas/match.schema';
 import { MatchesController } from './matches.controller';
 import { MatchesService } from './matches.service';
-import { TeamsModule } from '../teams/teams.module';
-import { LeaguesModule } from '../leagues/leagues.module';
+import { TeamsModule } from '../teams/teams.module';     
+import { LeaguesModule } from '../leagues/leagues.module'; 
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Match.name, schema: MatchSchema }]),
-    TeamsModule,
-    LeaguesModule,
+    TeamsModule,   
+    LeaguesModule, 
   ],
   controllers: [MatchesController],
   providers: [MatchesService],
