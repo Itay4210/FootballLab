@@ -6,16 +6,16 @@ export type MatchDocument = Match & Document;
 @Schema()
 export class MatchEvent {
   @Prop({ required: true })
-  minute: number;
+  minute: number; 
 
   @Prop({ required: true, enum: ['goal', 'yellowCard', 'redCard', 'substitution', 'injury'] })
   type: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Player', required: true })
-  playerId: Types.ObjectId;
+  playerId: Types.ObjectId; 
 
   @Prop()
-  description: string;
+  description: string; 
 }
 
 @Schema({ timestamps: true })
@@ -24,7 +24,7 @@ export class Match {
   leagueId: Types.ObjectId;
 
   @Prop({ required: true })
-  matchday: number;
+  matchday: number; 
 
   @Prop({ type: Types.ObjectId, ref: 'Team', required: true })
   homeTeam: Types.ObjectId;
@@ -46,7 +46,7 @@ export class Match {
 
   @Prop({ type: Object, default: { possession: 50, shots: 0, shotsOnTarget: 0 } })
   stats: {
-    possession: number;
+    possession: number; 
     shots: number;
     shotsOnTarget: number;
   };

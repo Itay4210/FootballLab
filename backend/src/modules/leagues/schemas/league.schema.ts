@@ -6,13 +6,13 @@ export type LeagueDocument = League & Document;
 @Schema({ timestamps: true })
 export class League {
   @Prop({ required: true, unique: true })
-  name: string;
+  name: string; 
 
   @Prop({ required: true })
-  country: string;
+  country: string; 
 
   @Prop({ default: 1 })
-  currentMatchday: number;
+  currentMatchday: number; 
 
   @Prop({ default: '2025/2026' })
   season: string;

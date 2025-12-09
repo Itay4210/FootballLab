@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TeamsModule } from './modules/teams/teams.module';
+import { TeamsModule } from './modules/teams/teams.module'; 
 import { PlayersModule } from './modules/players/players.module';
 import { LeaguesModule } from './modules/leagues/leagues.module';
 import { MatchesModule } from './modules/matches/matches.module';

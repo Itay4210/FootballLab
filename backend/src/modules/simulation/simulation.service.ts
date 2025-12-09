@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose'; 
 import { Cron } from '@nestjs/schedule';
-import { Match, MatchEvent } from '../matches/schemas/match.schema';
+import { Match, MatchDocument, MatchEvent } from '../matches/schemas/match.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { Player, PlayerDocument } from '../players/schemas/player.schema';
 import { MatchesService } from '../matches/matches.service';
@@ -10,15 +10,14 @@ import { MatchesService } from '../matches/matches.service';
 @Injectable()
 export class SimulationService {
   constructor(
-    @InjectModel(Match.name) private matchModel: Model<Match>,
-    @InjectModel(Team.name) private teamModel: Model<Team>,
-    @InjectModel(Player.name) private playerModel: Model<Player>,
+    @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
     private readonly matchesService: MatchesService,
   ) {}
 
   @Cron('0 0 */3 * *')
   async handleCron() {
-    console.log('⏰ Running automatic simulation...');
     await this.runDailySimulation();
   }
 
@@ -26,7 +25,6 @@ export class SimulationService {
     const remainingMatches = await this.matchModel.countDocuments({ status: 'scheduled' });
 
     if (remainingMatches === 0) {
-      console.log('🏁 End of season detected! Starting new season...');
       return this.startNewSeason();
     }
 
@@ -48,13 +46,13 @@ export class SimulationService {
   }
 
   private async startNewSeason() {
-    console.log('🧹 Clearing old season data...');
+    
 
     await this.matchModel.deleteMany({});
 
     await this.teamModel.updateMany({}, {
       $set: { 
-        seasonStats: { points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 } 
+        seasonStats: { matches: 0, points: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0 } 
       }
     });
 
@@ -64,13 +62,13 @@ export class SimulationService {
       }
     });
 
-    console.log('📅 Generating new fixtures...');
+    
     await this.matchesService.seed();
 
     return { message: '🎊 New Season Started! Stats reset, fixtures generated.' };
   }
 
-  private async simulateSingleMatch(match: any) {
+  private async simulateSingleMatch(match: MatchDocument) {
     const homeTeam = await this.teamModel.findById(match.homeTeam).exec();
     const awayTeam = await this.teamModel.findById(match.awayTeam).exec();
 
@@ -105,7 +103,7 @@ export class SimulationService {
         events.push({
           minute: Math.floor(Math.random() * 90) + 1,
           type: 'goal',
-          playerId: scorer._id as any,
+          playerId: scorer._id as Types.ObjectId, 
           description: 'Goal'
         });
       }
@@ -117,11 +115,14 @@ export class SimulationService {
         events.push({
           minute: Math.floor(Math.random() * 90) + 1,
           type: 'goal',
-          playerId: scorer._id as any,
+          playerId: scorer._id as Types.ObjectId,
           description: 'Goal'
         });
       }
     }
+
+    await this.updateTeamStats(homeTeam, homeGoals, awayGoals);
+    await this.updateTeamStats(awayTeam, awayGoals, homeGoals);
 
     match.score = { home: homeGoals, away: awayGoals };
     match.events = events.sort((a, b) => a.minute - b.minute);
@@ -135,7 +136,30 @@ export class SimulationService {
     };
   }
 
-  private async pickScorer(teamId: any) {
+  private async updateTeamStats(team: TeamDocument, goalsFor: number, goalsAgainst: number) {
+    const stats = team.seasonStats;
+
+    stats.matches = (stats.matches || 0) + 1;
+    stats.goalsFor += goalsFor;
+    stats.goalsAgainst += goalsAgainst;
+
+    if (goalsFor > goalsAgainst) {
+      stats.wins += 1;
+      stats.points += 3;
+      team.morale = Math.min(100, team.morale + 5);
+    } else if (goalsFor === goalsAgainst) {
+      stats.draws += 1;
+      stats.points += 1;
+    } else {
+      stats.losses += 1;
+      team.morale = Math.max(0, team.morale - 5);
+    }
+
+    team.markModified('seasonStats');
+    await team.save();
+  }
+
+  private async pickScorer(teamId: Types.ObjectId) { 
     const players = await this.playerModel.find({ teamId }).exec();
     
     if (!players || players.length === 0) return null;

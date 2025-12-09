@@ -1,7 +1,7 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 
-@Controller('teams')
+@Controller('teams') 
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
@@ -10,7 +10,7 @@ export class TeamsController {
     return this.teamsService.findAll();
   }
 
-  @Post('seed')
+  @Post('seed') 
   seedData() {
     return this.teamsService.seed();
   }
