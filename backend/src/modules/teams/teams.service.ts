@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Team, TeamDocument } from './schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema'; 
 
@@ -15,6 +15,26 @@ export class TeamsService {
     return this.teamModel.find().populate('leagueId').exec();
   }
 
+  async getTable(leagueId: string) {
+    const objectId = new Types.ObjectId(leagueId);
+
+    const teams = await this.teamModel
+      .find({ leagueId: objectId }) 
+      .exec();
+
+    return teams.sort((a, b) => {
+      const ptsDiff = b.seasonStats.points - a.seasonStats.points;
+      if (ptsDiff !== 0) return ptsDiff;
+
+      const goalDiffA = (a.seasonStats.goalsFor || 0) - (a.seasonStats.goalsAgainst || 0);
+      const goalDiffB = (b.seasonStats.goalsFor || 0) - (b.seasonStats.goalsAgainst || 0);
+      
+      if (goalDiffB - goalDiffA !== 0) return goalDiffB - goalDiffA;
+
+      return (b.seasonStats.goalsFor || 0) - (a.seasonStats.goalsFor || 0);
+    });
+  }
+
   async seed() {
     const count = await this.teamModel.countDocuments();
     if (count > 0) return { message: 'Teams already exist' };
@@ -23,19 +43,21 @@ export class TeamsService {
     if (leagues.length === 0) return { message: 'Run Leagues Seed first!' };
 
     const teamsToInsert: Partial<Team>[] = [];
-
+    
     const realTeams = {
-      'England': ['Man City', 'Arsenal', 'Liverpool', 'Man Utd', 'Chelsea', 'Spurs', 'Newcastle', 'Aston Villa'],
-      'Spain': ['Real Madrid', 'Barcelona', 'Atletico Madrid', 'Sevilla', 'Valencia', 'Real Sociedad', 'Betis'],
-      'Germany': ['Bayern Munich', 'Dortmund', 'Leipzig', 'Leverkusen', 'Wolfsburg', 'Frankfurt'],
-      'Italy': ['Napoli', 'Inter', 'Milan', 'Juventus', 'Roma', 'Lazio', 'Atalanta'],
-      'France': ['PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice']
+      'England': ['Man City', 'Arsenal', 'Liverpool', 'Man Utd', 'Chelsea', 'Spurs', 'Newcastle', 'Aston Villa', 'Brighton', 'West Ham', 'Crystal Palace', 'Fulham', 'Wolves', 'Everton', 'Nottingham Forest', 'Brentford', 'Southampton', 'Leeds', 'Leicester', 'Bournemouth'], // 20 קבוצות
+      'Spain': ['Real Madrid', 'Barcelona', 'Atletico Madrid', 'Sevilla', 'Valencia', 'Real Sociedad', 'Betis', 'Villarreal', 'Athletic Club', 'Celta Vigo', 'Osasuna', 'Rayo Vallecano', 'Mallorca', 'Girona', 'Cadiz', 'Almería', 'Valladolid', 'Elche', 'Getafe', 'Espanyol'], // 20 קבוצות
+      'Germany': ['Bayern Munich', 'Dortmund', 'Leipzig', 'Leverkusen', 'Wolfsburg', 'Frankfurt', 'Union Berlin', 'Freiburg', 'Koln', 'Mainz', 'Hoffenheim', 'Mönchengladbach', 'Werder Bremen', 'Augsburg', 'Stuttgart', 'Bochum', 'Hertha Berlin', 'Schalke'], // 18 קבוצות
+      'Italy': ['Napoli', 'Inter', 'Milan', 'Juventus', 'Roma', 'Lazio', 'Atalanta', 'Fiorentina', 'Bologna', 'Torino', 'Monza', 'Udinese', 'Sassuolo', 'Empoli', 'Salernitana', 'Lecce', 'Spezia', 'Verona', 'Cremonese', 'Sampdoria'], // 20 קבוצות
+      'France': ['PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice', 'Rennes', 'Lorient', 'Lens', 'Reims', 'Toulouse', 'Montpellier', 'Angers', 'Nantes', 'Strasbourg', 'Troyes', 'Ajaccio', 'Auxerre', 'Brest', 'Clermont'] // 20 קבוצות
     };
 
     for (const league of leagues) {
       const leagueTeamNames = [...(realTeams[league.country] || [])];
       
-      for (let i = leagueTeamNames.length + 1; i <= 20; i++) {
+      const targetCount = league.country === 'Germany' ? 18 : 20;
+
+      for (let i = leagueTeamNames.length + 1; i <= targetCount; i++) {
         leagueTeamNames.push(`${league.country} Club ${i}`); 
       }
 

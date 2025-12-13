@@ -1,4 +1,4 @@
-import { Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Param } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 
 @Controller('teams') 
@@ -9,6 +9,11 @@ export class TeamsController {
   getAllTeams() {
     return this.teamsService.findAll();
   }
+
+  @Get('league/:leagueId/table')
+  getLeagueTable(@Param('leagueId') leagueId: string) {
+    return this.teamsService.getTable(leagueId);
+  } 
 
   @Post('seed') 
   seedData() {

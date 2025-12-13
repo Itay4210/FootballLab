@@ -1,40 +1,80 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { FootballAPI, type Team, type League } from './services/api';
+import { LeagueTable } from './components/LeagueTable';
 
 function App() {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-5">
-      
-      <div className="text-center mb-10">
-        <h1 className="text-6xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-lab-accent to-blue-500">
-          FootballLab 🧪
-        </h1>
-        <p className="text-xl text-slate-400 mt-2">
-          The Ultimate Football Simulation Engine
-        </p>
-      </div>
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(false);
 
-      <div className="bg-lab-card p-8 rounded-2xl shadow-2xl border border-slate-700 max-w-md w-full text-center">
-        <h2 className="text-2xl font-bold mb-4 text-white">System Status</h2>
-        
-        <div className="flex justify-between items-center py-2 border-b border-slate-700">
-          <span>Backend Connection</span>
-          <span className="text-lab-accent font-mono">Checking...</span>
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      try {
+        const data = await FootballAPI.getLeagues();
+        setLeagues(data);
+        if (data.length > 0) {
+          setSelectedLeague(data[0]._id); 
+        }
+      } catch (error) {
+        console.error("Failed to fetch leagues", error);
+      }
+    };
+    fetchLeagues();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedLeague) return;
+
+    const fetchTable = async () => {
+      setLoading(true);
+      try {
+        const data = await FootballAPI.getLeagueTable(selectedLeague);
+        setTeams(data);
+      } catch (error) {
+        console.error("Failed to fetch table", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTable();
+  }, [selectedLeague]);
+
+  return (
+    <div className="min-h-screen p-5 md:p-10 max-w-7xl mx-auto">
+      
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-lab-accent to-blue-500">
+            FootbalLab 🧪
+          </h1>
+          <p className="text-slate-400 text-sm">Season 2025/26 Simulation</p>
         </div>
-        
-        <div className="mt-6">
-          <button className="w-full bg-lab-accent hover:bg-emerald-400 text-lab-dark font-bold py-3 px-6 rounded-lg transition-all">
-            Enter the Lab
-          </button>
+
+        <div className="flex gap-2">
+          {leagues.map(league => (
+            <button
+              key={league._id}
+              onClick={() => setSelectedLeague(league._id)}
+              className={`px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                selectedLeague === league._id 
+                  ? 'bg-lab-accent text-lab-dark shadow-[0_0_15px_rgba(16,185,129,0.5)]' 
+                  : 'bg-lab-card hover:bg-slate-700 text-slate-300'
+              }`}
+            >
+              {league.country}
+            </button>
+          ))}
         </div>
-      </div>
+      </header>
+
+      <main>
+        <LeagueTable teams={teams} loading={loading} />
+      </main>
 
     </div>
   )
 }
-
-
 
 export default App
