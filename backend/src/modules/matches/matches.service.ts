@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose'; 
+import { Model, Types } from 'mongoose';
 import { Match, MatchDocument } from './schemas/match.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
@@ -17,20 +17,35 @@ export class MatchesService {
     return this.matchModel.find().exec();
   }
 
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
   async seed() {
-    const count = await this.matchModel.countDocuments();
-    if (count > 0) return { message: 'Matches already exist!' };
+    await this.matchModel.deleteMany({});
 
     const leagues = await this.leagueModel.find().exec();
+    const allTeams = await this.teamModel.find().exec(); 
     const allMatchesToInsert: Partial<Match>[] = [];
 
     for (const league of leagues) {
-      const teams = await this.teamModel.find({ leagueId: league._id }).exec();
+      const teamsInLeague = allTeams.filter(t => t.leagueId.equals(league._id));
       
-      if (teams.length < 2) continue; 
+      if (teamsInLeague.length < 2) continue; 
 
-      const fixtures = this.generateRoundRobin(teams, league._id as Types.ObjectId);
-      allMatchesToInsert.push(...fixtures);
+      if (league.name === 'Champions League') {
+          const clFixtures = this.generateChampionsLeagueFixtures(league._id as Types.ObjectId, teamsInLeague);
+          allMatchesToInsert.push(...clFixtures);
+
+      } else {
+          const leagueFixtures = this.generateRoundRobin(teamsInLeague, league._id as Types.ObjectId);
+          allMatchesToInsert.push(...leagueFixtures);
+      }
     }
 
     await this.matchModel.insertMany(allMatchesToInsert);
@@ -39,7 +54,61 @@ export class MatchesService {
       message: `Fixtures generated! Created ${allMatchesToInsert.length} matches across ${leagues.length} leagues.` 
     };
   }
+  
+  private generateChampionsLeagueFixtures(leagueId: Types.ObjectId, teams: TeamDocument[]): Partial<Match>[] {
+    if (teams.length !== 20) {
+      console.warn(`[CL Fixtures] Expected 20 teams, got ${teams.length}. Skipping CL fixtures.`);
+      return [];
+    }
+    
+    const matchesToInsert: Partial<Match>[] = [];
+    const shuffledTeams = this.shuffleArray(teams); 
+    const groups: TeamDocument[][] = [];
+    
+    for (let i = 0; i < 5; i++) {
+      groups.push(shuffledTeams.slice(i * 4, (i + 1) * 4));
+    }
 
+    let currentMatchday = 1;
+    
+    const groupRoundRobinIndices = [
+        [0, 3], [1, 2], 
+        [0, 2], [3, 1], 
+        [0, 1], [3, 2]  
+    ];
+    
+    const homeRounds = [1, 2, 3];
+    const awayRounds = [4, 5, 6];
+
+    for (const group of groups) {
+      for (let i = 0; i < 3; i++) {
+        const [homeIndex, awayIndex] = groupRoundRobinIndices[i];
+        
+        matchesToInsert.push({
+          leagueId: leagueId,
+          matchday: homeRounds[i],
+          homeTeam: group[homeIndex]._id,
+          awayTeam: group[awayIndex]._id,
+          score: { home: 0, away: 0 },
+          status: 'scheduled',
+          events: [],
+        });
+        
+        matchesToInsert.push({
+          leagueId: leagueId,
+          matchday: awayRounds[i],
+          homeTeam: group[awayIndex]._id, 
+          awayTeam: group[homeIndex]._id,
+          score: { home: 0, away: 0 },
+          status: 'scheduled',
+          events: [],
+        });
+      }
+    }
+    
+    return matchesToInsert;
+  }
+  
   private generateRoundRobin(teams: TeamDocument[], leagueId: Types.ObjectId): Partial<Match>[] {
     const matches: Partial<Match>[] = [];
     const numTeams = teams.length;
@@ -63,7 +132,6 @@ export class MatchesService {
           score: { home: 0, away: 0 },
           status: 'scheduled',
           events: [],
-          stats: { possession: 50, shots: 0, shotsOnTarget: 0 }
         });
       }
 

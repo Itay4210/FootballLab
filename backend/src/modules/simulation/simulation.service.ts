@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose'; 
+import { Model, Types } from 'mongoose';
 import { Cron } from '@nestjs/schedule';
 import { Match, MatchDocument, MatchEvent } from '../matches/schemas/match.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { Player, PlayerDocument } from '../players/schemas/player.schema';
+import { League, LeagueDocument } from '../leagues/schemas/league.schema';
 import { MatchesService } from '../matches/matches.service';
 
 @Injectable()
@@ -13,40 +14,67 @@ export class SimulationService {
     @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
+    @InjectModel(League.name) private leagueModel: Model<LeagueDocument>,
     private readonly matchesService: MatchesService,
   ) {}
 
   @Cron('0 0 */3 * *')
   async handleCron() {
-    await this.runDailySimulation();
+    console.log('Running automatic simulation...');
+    await this.runSeasonMatchday();
   }
 
-  async runDailySimulation(leagueId?: string) {
-    const remainingMatches = await this.matchModel.countDocuments({ status: 'scheduled' });
+  async runSeasonMatchday() {
+    const leagues = await this.leagueModel.find().exec();
+    
+    if (leagues.length === 0) {
+      return { message: 'No leagues found. Run seed first.' };
+    }
+    
+    const overallResults: { league: string; matchesSimulated: number }[] = [];
+    let leaguesFinishedCount = 0;
 
-    if (remainingMatches === 0) {
+    for (const league of leagues) {
+      
+      const matchesToPlay = await this.matchModel
+        .find({ leagueId: league._id, status: 'scheduled' })
+        .sort({ matchday: 1 })
+        .limit(10)
+        .exec();
+
+      if (matchesToPlay.length === 0) {
+        leaguesFinishedCount++;
+        continue;
+      }
+      
+      let simulatedCount = 0;
+      
+      for (const match of matchesToPlay) {
+        await this.simulateSingleMatch(match);
+        simulatedCount++;
+      }
+      
+      if (simulatedCount > 0) {
+        const nextMatchday = matchesToPlay[0].matchday + 1;
+        await this.leagueModel.findByIdAndUpdate(
+          league._id, 
+          { $set: { currentMatchday: nextMatchday } }
+        ).exec();
+      }
+
+      overallResults.push({ league: league.name, matchesSimulated: simulatedCount });
+    }
+
+    if (leagues.length > 0 && leaguesFinishedCount === leagues.length) {
+      console.log('End of season detected across all leagues! Starting new season...');
       return this.startNewSeason();
     }
-
-    const matchesToPlay = await this.matchModel
-      .find({ status: 'scheduled' })
-      .limit(10)
-      .exec();
-
-    const results: { match: string; score: string }[] = [];
-
-    for (const match of matchesToPlay) {
-      const result = await this.simulateSingleMatch(match);
-      if (result) {
-        results.push(result);
-      }
-    }
-
-    return { message: `Simulated ${results.length} matches`, results };
+    
+    return { message: `Simulated matches across ${leagues.length} leagues.`, results: overallResults };
   }
 
   private async startNewSeason() {
-    
+    console.log('Clearing old season data...');
 
     await this.matchModel.deleteMany({});
 
@@ -62,10 +90,58 @@ export class SimulationService {
       }
     });
 
+    const isFirstSeason = (await this.matchModel.countDocuments({ status: 'finished' }).exec()) === 0;
+
+    const championsLeague = await this.leagueModel.findOne({ name: 'Champions League' }).exec();
     
+    if (championsLeague) {
+        const nationalLeagues = await this.leagueModel.find({ name: { $ne: 'Champions League' } }).exec();
+        const topTeamsIds: Types.ObjectId[] = [];
+
+        await this.teamModel.updateMany(
+            { leagueId: championsLeague._id }, 
+            { $set: { leagueId: null } }
+        );
+
+        if (isFirstSeason) {
+            console.log('CL Qualification: First season, selecting top 4 teams from seed (default).');
+            for (const league of nationalLeagues) {
+                const initialTop4 = await this.teamModel
+                    .find({ leagueId: league._id })
+                    .sort({ name: 1 })
+                    .limit(4)
+                    .exec();
+                
+                topTeamsIds.push(...initialTop4.map(t => t._id as Types.ObjectId));
+            }
+        } else {
+            console.log('CL Qualification: Subsequent season, selecting top 4 based on previous standings.');
+            for (const league of nationalLeagues) {
+                const top4 = await this.teamModel
+                    .find({ leagueId: league._id })
+                    .sort({ 'seasonStats.points': -1, 'seasonStats.goalsFor': -1 })
+                    .limit(4)
+                    .exec();
+                
+                topTeamsIds.push(...top4.map(t => t._id as Types.ObjectId));
+            }
+        }
+        
+        if (topTeamsIds.length > 0) {
+            await this.teamModel.updateMany(
+                { _id: { $in: topTeamsIds } }, 
+                { $set: { leagueId: championsLeague._id } }
+            );
+            console.log(`Champions League updated with ${topTeamsIds.length} top teams.`);
+        }
+        
+        await this.leagueModel.findByIdAndUpdate(championsLeague._id, { $set: { currentMatchday: 1 } }).exec();
+    }
+
+    console.log('Generating new fixtures...');
     await this.matchesService.seed();
 
-    return { message: '🎊 New Season Started! Stats reset, fixtures generated.' };
+    return { message: 'New Season Started! Stats reset, fixtures generated.' };
   }
 
   private async simulateSingleMatch(match: MatchDocument) {

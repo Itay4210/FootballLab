@@ -41,6 +41,9 @@ function App() {
     fetchTable();
   }, [selectedLeague]);
 
+  const selectedLeagueObj = leagues.find(l => l._id === selectedLeague);
+  const currentLeagueName = selectedLeagueObj?.name || selectedLeagueObj?.country || '';
+
   return (
     <div className="min-h-screen p-5 md:p-10 max-w-7xl mx-auto">
       
@@ -70,7 +73,7 @@ function App() {
       </header>
 
       <main>
-        <LeagueTable teams={teams} loading={loading} />
+        <LeagueTable teams={teams} loading={loading} leagueName={currentLeagueName}/>
       </main>
 
     </div>

@@ -45,11 +45,11 @@ export class TeamsService {
     const teamsToInsert: Partial<Team>[] = [];
     
     const realTeams = {
-      'England': ['Man City', 'Arsenal', 'Liverpool', 'Man Utd', 'Chelsea', 'Spurs', 'Newcastle', 'Aston Villa', 'Brighton', 'West Ham', 'Crystal Palace', 'Fulham', 'Wolves', 'Everton', 'Nottingham Forest', 'Brentford', 'Southampton', 'Leeds', 'Leicester', 'Bournemouth'], // 20 קבוצות
-      'Spain': ['Real Madrid', 'Barcelona', 'Atletico Madrid', 'Sevilla', 'Valencia', 'Real Sociedad', 'Betis', 'Villarreal', 'Athletic Club', 'Celta Vigo', 'Osasuna', 'Rayo Vallecano', 'Mallorca', 'Girona', 'Cadiz', 'Almería', 'Valladolid', 'Elche', 'Getafe', 'Espanyol'], // 20 קבוצות
-      'Germany': ['Bayern Munich', 'Dortmund', 'Leipzig', 'Leverkusen', 'Wolfsburg', 'Frankfurt', 'Union Berlin', 'Freiburg', 'Koln', 'Mainz', 'Hoffenheim', 'Mönchengladbach', 'Werder Bremen', 'Augsburg', 'Stuttgart', 'Bochum', 'Hertha Berlin', 'Schalke'], // 18 קבוצות
-      'Italy': ['Napoli', 'Inter', 'Milan', 'Juventus', 'Roma', 'Lazio', 'Atalanta', 'Fiorentina', 'Bologna', 'Torino', 'Monza', 'Udinese', 'Sassuolo', 'Empoli', 'Salernitana', 'Lecce', 'Spezia', 'Verona', 'Cremonese', 'Sampdoria'], // 20 קבוצות
-      'France': ['PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice', 'Rennes', 'Lorient', 'Lens', 'Reims', 'Toulouse', 'Montpellier', 'Angers', 'Nantes', 'Strasbourg', 'Troyes', 'Ajaccio', 'Auxerre', 'Brest', 'Clermont'] // 20 קבוצות
+      'England': ['Man City', 'Arsenal', 'Liverpool', 'Man Utd', 'Chelsea', 'Spurs', 'Newcastle', 'Aston Villa', 'Brighton', 'West Ham', 'Crystal Palace', 'Fulham', 'Wolves', 'Everton', 'Nottingham Forest', 'Brentford', 'Southampton', 'Leeds', 'Leicester', 'Bournemouth'],
+      'Spain': ['Real Madrid', 'Barcelona', 'Atletico Madrid', 'Sevilla', 'Valencia', 'Real Sociedad', 'Betis', 'Villarreal', 'Athletic Club', 'Celta Vigo', 'Osasuna', 'Rayo Vallecano', 'Mallorca', 'Girona', 'Cadiz', 'Almería', 'Valladolid', 'Elche', 'Getafe', 'Espanyol'],
+      'Germany': ['Bayern Munich', 'Dortmund', 'Leipzig', 'Leverkusen', 'Wolfsburg', 'Frankfurt', 'Union Berlin', 'Freiburg', 'Koln', 'Mainz', 'Hoffenheim', 'Mönchengladbach', 'Werder Bremen', 'Augsburg', 'Stuttgart', 'Bochum', 'Hertha Berlin', 'Schalke'],
+      'Italy': ['Napoli', 'Inter', 'Milan', 'Juventus', 'Roma', 'Lazio', 'Atalanta', 'Fiorentina', 'Bologna', 'Torino', 'Monza', 'Udinese', 'Sassuolo', 'Empoli', 'Salernitana', 'Lecce', 'Spezia', 'Verona', 'Cremonese', 'Sampdoria'],
+      'France': ['PSG', 'Marseille', 'Lyon', 'Monaco', 'Lille', 'Nice', 'Rennes', 'Lorient', 'Lens', 'Reims', 'Toulouse', 'Montpellier', 'Angers', 'Nantes', 'Strasbourg', 'Troyes', 'Ajaccio', 'Auxerre', 'Brest', 'Clermont']
     };
 
     for (const league of leagues) {
