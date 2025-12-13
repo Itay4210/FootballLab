@@ -37,7 +37,6 @@ export class PlayersService {
       { pos: 'ST', count: 2 },  
     ];
 
-
     for (const team of teams) {
       
       for (const role of SQUAD_DISTRIBUTION) {
