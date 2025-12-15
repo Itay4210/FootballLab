@@ -12,6 +12,6 @@ import { LeaguesModule } from '../leagues/leagues.module';
   ],
   controllers: [TeamsController],
   providers: [TeamsService],
-  exports: [MongooseModule], 
+  exports: [MongooseModule, TeamsService,MongooseModule.forFeature([{ name: 'Team', schema: TeamSchema }])], 
 })
 export class TeamsModule {}

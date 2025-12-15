@@ -30,95 +30,100 @@ export class MatchesService {
     await this.matchModel.deleteMany({});
 
     const leagues = await this.leagueModel.find().exec();
-    const allTeams = await this.teamModel.find().exec(); 
+    const allTeams = await this.teamModel.find().exec();
     const allMatchesToInsert: Partial<Match>[] = [];
 
     for (const league of leagues) {
-      const teamsInLeague = allTeams.filter(t => t.leagueId.equals(league._id));
-      
-      if (teamsInLeague.length < 2) continue; 
+      const teamsInLeague = allTeams.filter(t => t.leagueId && t.leagueId.equals(league._id));
+
+      if (teamsInLeague.length < 2) continue;
 
       if (league.name === 'Champions League') {
-          const clFixtures = this.generateChampionsLeagueFixtures(league._id as Types.ObjectId, teamsInLeague);
-          allMatchesToInsert.push(...clFixtures);
-
+        const clFixtures = await this.generateChampionsLeagueFixtures(league._id as Types.ObjectId, teamsInLeague);
+        allMatchesToInsert.push(...clFixtures);
       } else {
-          const leagueFixtures = this.generateRoundRobin(teamsInLeague, league._id as Types.ObjectId);
-          allMatchesToInsert.push(...leagueFixtures);
+        const leagueFixtures = this.generateRoundRobin(teamsInLeague, league._id as Types.ObjectId);
+        allMatchesToInsert.push(...leagueFixtures);
       }
     }
 
     await this.matchModel.insertMany(allMatchesToInsert);
-    
-    return { 
-      message: `Fixtures generated! Created ${allMatchesToInsert.length} matches across ${leagues.length} leagues.` 
+
+    return {
+      message: `Fixtures generated! Created ${allMatchesToInsert.length} matches across ${leagues.length} leagues.`
     };
   }
-  
-  private generateChampionsLeagueFixtures(leagueId: Types.ObjectId, teams: TeamDocument[]): Partial<Match>[] {
+
+  private async generateChampionsLeagueFixtures(leagueId: Types.ObjectId, teams: TeamDocument[]): Promise<Partial<Match>[]> {
     if (teams.length !== 20) {
       console.warn(`[CL Fixtures] Expected 20 teams, got ${teams.length}. Skipping CL fixtures.`);
       return [];
     }
-    
+
     const matchesToInsert: Partial<Match>[] = [];
-    const shuffledTeams = this.shuffleArray(teams); 
+    const shuffledTeams = this.shuffleArray(teams);
     const groups: TeamDocument[][] = [];
-    
+    const groupNames = ['A', 'B', 'C', 'D', 'E'];
+
     for (let i = 0; i < 5; i++) {
-      groups.push(shuffledTeams.slice(i * 4, (i + 1) * 4));
+      const groupTeams = shuffledTeams.slice(i * 4, (i + 1) * 4);
+      groups.push(groupTeams);
+
+      const groupName = groupNames[i];
+
+      await this.teamModel.updateMany(
+        { _id: { $in: groupTeams.map(t => t._id) } },
+        { $set: { clGroup: groupName } }
+      ).exec();
     }
 
-    let currentMatchday = 1;
-    
-    const groupRoundRobinIndices = [
-        [0, 3], [1, 2], 
-        [0, 2], [3, 1], 
-        [0, 1], [3, 2]  
+    const groupMatchups = [
+      [[0, 1], [2, 3]],
+      [[0, 2], [1, 3]],
+      [[0, 3], [1, 2]]
     ];
-    
-    const homeRounds = [1, 2, 3];
-    const awayRounds = [4, 5, 6];
 
     for (const group of groups) {
-      for (let i = 0; i < 3; i++) {
-        const [homeIndex, awayIndex] = groupRoundRobinIndices[i];
-        
-        matchesToInsert.push({
-          leagueId: leagueId,
-          matchday: homeRounds[i],
-          homeTeam: group[homeIndex]._id,
-          awayTeam: group[awayIndex]._id,
-          score: { home: 0, away: 0 },
-          status: 'scheduled',
-          events: [],
-        });
-        
-        matchesToInsert.push({
-          leagueId: leagueId,
-          matchday: awayRounds[i],
-          homeTeam: group[awayIndex]._id, 
-          awayTeam: group[homeIndex]._id,
-          score: { home: 0, away: 0 },
-          status: 'scheduled',
-          events: [],
-        });
+      for (let round = 0; round < 3; round++) {
+        const matchupsInRound = groupMatchups[round];
+
+        for (const [homeIndex, awayIndex] of matchupsInRound) {
+          matchesToInsert.push({
+            leagueId: leagueId,
+            matchday: round + 1,
+            homeTeam: group[homeIndex]._id,
+            awayTeam: group[awayIndex]._id,
+            score: { home: 0, away: 0 },
+            status: 'scheduled',
+            events: [],
+          });
+
+          matchesToInsert.push({
+            leagueId: leagueId,
+            matchday: round + 4,
+            homeTeam: group[awayIndex]._id,
+            awayTeam: group[homeIndex]._id,
+            score: { home: 0, away: 0 },
+            status: 'scheduled',
+            events: [],
+          });
+        }
       }
     }
-    
+
     return matchesToInsert;
   }
-  
+
   private generateRoundRobin(teams: TeamDocument[], leagueId: Types.ObjectId): Partial<Match>[] {
     const matches: Partial<Match>[] = [];
     const numTeams = teams.length;
-    const numRounds = (numTeams - 1) * 2; 
+    const numRounds = (numTeams - 1) * 2;
     const matchesPerRound = numTeams / 2;
 
     let rotation: Types.ObjectId[] = teams.map(t => t._id as Types.ObjectId);
 
     for (let round = 0; round < numRounds; round++) {
-      const isSecondHalf = round >= (numTeams - 1); 
+      const isSecondHalf = round >= (numTeams - 1);
 
       for (let i = 0; i < matchesPerRound; i++) {
         const home = rotation[i];
@@ -137,12 +142,12 @@ export class MatchesService {
 
       const fixedTeam = rotation[0];
       const rest = rotation.slice(1);
-      
+
       const lastTeam = rest.pop();
       if (lastTeam) {
         rest.unshift(lastTeam);
       }
-      
+
       rotation = [fixedTeam, ...rest];
     }
 
