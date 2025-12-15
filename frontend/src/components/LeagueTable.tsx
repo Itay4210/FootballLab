@@ -7,9 +7,9 @@ interface Props {
 }
 
 export const LeagueTable = ({ teams, loading, leagueName }: Props) => {
-  const isChampionsLeague = 
-    leagueName === 'Champions League' || 
-    leagueName === 'Europe' || 
+  const isChampionsLeague =
+    leagueName === 'Champions League' ||
+    leagueName === 'Europe' ||
     leagueName?.includes('Champions');
 
   if (loading) {
@@ -32,73 +32,87 @@ export const LeagueTable = ({ teams, loading, leagueName }: Props) => {
   }
 
   if (isChampionsLeague) {
-    const groups = [];
-    const groupNames = ['A', 'B', 'C', 'D', 'E'];
-    for (let i = 0; i < 5; i++) {
-        groups.push(teams.slice(i * 4, (i + 1) * 4));
-    }
+    const teamsByGroup: { [key: string]: Team[] } = teams.reduce((acc, team) => {
+        const groupName = (team as any).clGroup || 'Z';
+        if (!acc[groupName]) {
+            acc[groupName] = [];
+        }
+        acc[groupName].push(team);
+        return acc;
+    }, {} as { [key: string]: Team[] });
 
-    const topRowGroups = groups.slice(0, 3);
-    const bottomRowGroups = groups.slice(3, 5);
+    const sortedGroupNames = Object.keys(teamsByGroup).filter(name => name !== 'Z').sort();
 
-    const renderGroupCard = (groupTeams: Team[], groupIndex: number, originalIndex: number) => (
-        <div key={originalIndex} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden shadow-md hover:border-lab-accent transition-all duration-300 w-full">
-            
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 py-2 px-3 border-b border-slate-600 flex justify-between items-center">
-                <h3 className="font-bold text-lab-accent text-base">Group {groupNames[originalIndex]}</h3>
+    const topRowGroups = sortedGroupNames.slice(0, 3);
+    const bottomRowGroups = sortedGroupNames.slice(3, 5);
+
+    const renderGroupCard = (groupName: string) => {
+        const groupTeams = teamsByGroup[groupName];
+        if (!groupTeams || groupTeams.length === 0) return null;
+
+        const sortedInGroup = groupTeams.sort((a, b) => {
+            if (b.seasonStats.points !== a.seasonStats.points) {
+                return b.seasonStats.points - a.seasonStats.points;
+            }
+            const gdA = a.seasonStats.goalsFor - a.seasonStats.goalsAgainst;
+            const gdB = b.seasonStats.goalsFor - b.seasonStats.goalsAgainst;
+            return gdB - gdA;
+        });
+
+        return (
+            <div key={groupName} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden shadow-md hover:border-lab-accent transition-all duration-300 w-full">
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 py-2 px-3 border-b border-slate-600 flex justify-between items-center">
+                    <h3 className="font-bold text-lab-accent text-base">Group {groupName}</h3>
+                </div>
+
+                <table className="w-full text-sm text-left text-gray-300">
+                    <thead className="text-xs uppercase bg-slate-900/60 text-gray-500 font-semibold">
+                        <tr>
+                            <th className="px-2 py-2 w-8 text-center">#</th>
+                            <th className="px-2 py-2">Team</th>
+                            <th className="px-1 py-2 text-center">W</th>
+                            <th className="px-1 py-2 text-center">D</th>
+                            <th className="px-1 py-2 text-center">L</th>
+                            <th className="px-1 py-2 text-center">GD</th>
+                            <th className="px-2 py-2 text-center text-white">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {sortedInGroup.map((team, idx) => {
+                            const goalDiff = (team.seasonStats.goalsFor || 0) - (team.seasonStats.goalsAgainst || 0);
+                            let rowClass = "border-b border-slate-700/50 hover:bg-slate-700 transition-colors h-9";
+
+                            if (idx < 2) rowClass += " border-l-4 border-l-lab-accent bg-green-500/10";
+                            else rowClass += " border-l-4 border-l-transparent";
+
+                            return (
+                                <tr key={team._id} className={rowClass}>
+                                    <td className="px-1 text-center font-medium text-slate-500">{idx + 1}</td>
+                                    <td className="px-2 font-bold text-gray-100 truncate max-w-[130px]" title={team.name}>
+                                        {team.name}
+                                    </td>
+                                    <td className="px-1 text-center text-green-400">{team.seasonStats.wins}</td>
+                                    <td className="px-1 text-center text-slate-500">{team.seasonStats.draws}</td>
+                                    <td className="px-1 text-center text-red-400">{team.seasonStats.losses}</td>
+                                    <td className="px-1 text-center text-slate-400 font-mono text-xs">{goalDiff > 0 ? `+${goalDiff}` : goalDiff}</td>
+                                    <td className="px-2 text-center font-black text-lab-accent text-lg">{team.seasonStats.points}</td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
             </div>
-
-            <table className="w-full text-sm text-left text-gray-300">
-                <thead className="text-xs uppercase bg-slate-900/60 text-gray-500 font-semibold">
-                    <tr>
-                        <th className="px-2 py-2 w-8 text-center">#</th>
-                        <th className="px-2 py-2">Team</th>
-                        <th className="px-1 py-2 text-center">W</th>
-                        <th className="px-1 py-2 text-center">D</th>
-                        <th className="px-1 py-2 text-center">L</th>
-                        <th className="px-1 py-2 text-center">GD</th>
-                        <th className="px-2 py-2 text-center text-white">Pts</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {groupTeams.map((team, idx) => {
-                        const goalDiff = (team.seasonStats.goalsFor || 0) - (team.seasonStats.goalsAgainst || 0);
-                        
-                        let rowClass = "border-b border-slate-700/50 hover:bg-slate-700 transition-colors h-9"; 
-                        
-                        if (idx < 2) rowClass += " border-l-4 border-l-lab-accent bg-green-500/10";
-                        else rowClass += " border-l-4 border-l-transparent";
-
-                        return (
-                            <tr key={team._id} className={rowClass}>
-                                <td className="px-1 text-center font-medium text-slate-500">{idx + 1}</td>
-                                <td className="px-2 font-bold text-gray-100 truncate max-w-[130px]" title={team.name}>
-                                    {team.name}
-                                </td>
-                                <td className="px-1 text-center text-green-400">{team.seasonStats.wins}</td>
-                                <td className="px-1 text-center text-slate-500">{team.seasonStats.draws}</td>
-                                <td className="px-1 text-center text-red-400">{team.seasonStats.losses}</td>
-                                <td className="px-1 text-center text-slate-400 font-mono text-xs">{goalDiff > 0 ? `+${goalDiff}` : goalDiff}</td>
-                                <td className="px-2 text-center font-black text-lab-accent text-lg">{team.seasonStats.points}</td>
-                            </tr>
-                        );
-                    })}
-                </tbody>
-            </table>
-        </div>
-    );
+        );
+    };
 
     return (
       <div className="animate-fade-in pb-8 flex flex-col gap-5">
-        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {topRowGroups.map((group, idx) => renderGroupCard(group, idx, idx))}
+            {topRowGroups.map(renderGroupCard)}
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:w-3/4 lg:mx-auto">
-            {bottomRowGroups.map((group, idx) => renderGroupCard(group, idx, idx + 3))}
+            {bottomRowGroups.map(renderGroupCard)}
         </div>
-
       </div>
     );
   }
@@ -125,7 +139,7 @@ export const LeagueTable = ({ teams, loading, leagueName }: Props) => {
             {teams.map((team, index) => {
                 const goalDiff = (team.seasonStats.goalsFor || 0) - (team.seasonStats.goalsAgainst || 0);
                 let rowClass = "hover:bg-slate-800/50 transition-all duration-200";
-                
+
                 if (index < 4) rowClass += " border-l-4 border-l-lab-accent bg-green-500/5";
                 else if (index >= teams.length - 3) rowClass += " border-l-4 border-l-red-500 bg-red-500/5";
                 else rowClass += " border-l-4 border-l-transparent";
@@ -134,7 +148,7 @@ export const LeagueTable = ({ teams, loading, leagueName }: Props) => {
                 <tr key={team._id} className={rowClass}>
                     <td className="px-6 py-4 font-medium text-white">{index + 1}</td>
                     <td className="px-6 py-4 font-bold text-white text-base flex items-center gap-3">
-                         {team.name}
+                          {team.name}
                     </td>
                     <td className="px-4 py-4 text-center text-slate-400">{team.seasonStats.matches || 0}</td>
                     <td className="px-4 py-4 text-center text-green-400 font-medium">{team.seasonStats.wins || 0}</td>

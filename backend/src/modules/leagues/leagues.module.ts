@@ -10,6 +10,7 @@ import { LeaguesService } from './leagues.service';
   ],
   controllers: [LeaguesController],
   providers: [LeaguesService],
-  exports: [MongooseModule], 
+  exports: [MongooseModule,LeaguesService,
+    MongooseModule.forFeature([{ name: 'League', schema: LeagueSchema }])], 
 })
 export class LeaguesModule {}
