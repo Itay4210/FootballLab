@@ -28,17 +28,23 @@ export class MatchesService {
 
   async seed() {
     await this.matchModel.deleteMany({});
-
+  
     const leagues = await this.leagueModel.find().exec();
     const allTeams = await this.teamModel.find().exec();
     const allMatchesToInsert: Partial<Match>[] = [];
-
+  
     for (const league of leagues) {
-      const teamsInLeague = allTeams.filter(t => t.leagueId && t.leagueId.equals(league._id));
-
+      let teamsInLeague: TeamDocument[] = [];
+  
+      if (league.name === 'Champions League' || league.name === 'Europe') {
+        teamsInLeague = allTeams.filter(t => t.leagueId && t.leagueId.equals(league._id));
+      } else {
+        teamsInLeague = allTeams.filter(t => t.country === league.country);
+      }
+  
       if (teamsInLeague.length < 2) continue;
-
-      if (league.name === 'Champions League') {
+  
+      if (league.name === 'Champions League' || league.name === 'Europe') {
         const clFixtures = await this.generateChampionsLeagueFixtures(league._id as Types.ObjectId, teamsInLeague);
         allMatchesToInsert.push(...clFixtures);
       } else {
@@ -46,9 +52,9 @@ export class MatchesService {
         allMatchesToInsert.push(...leagueFixtures);
       }
     }
-
+  
     await this.matchModel.insertMany(allMatchesToInsert);
-
+  
     return {
       message: `Fixtures generated! Created ${allMatchesToInsert.length} matches across ${leagues.length} leagues.`
     };
@@ -70,11 +76,14 @@ export class MatchesService {
       groups.push(groupTeams);
 
       const groupName = groupNames[i];
-
+      const teamIds = groupTeams.map(t => t._id);
+      
       await this.teamModel.updateMany(
-        { _id: { $in: groupTeams.map(t => t._id) } },
+        { _id: { $in: teamIds } },
         { $set: { clGroup: groupName } }
       ).exec();
+      
+      console.log(`[CL Seed] Group ${groupName}: ${groupTeams.map(t => t.name).join(', ')}`);
     }
 
     const groupMatchups = [
