@@ -48,7 +48,6 @@ export class SimulationService {
         const isCL = ['Champions League', 'Europe'].includes(league.name);
         this.logger.log(`Processing league: ${league.name}, Matchday: ${league.currentMatchday}, isCL: ${isCL}`);
         
-        // --- לוגיקת נוקאאוט ליגת האלופות ---
         if (isCL) {
           await this.handleCLKnockoutLogic(league, currentGlobalWeek);
         }
@@ -65,7 +64,6 @@ export class SimulationService {
           }
         } else {
           const targetWeek = league.currentMatchday * 4;
-          // מיוחד לנוקאאוט: אם אנחנו במחזור המטרה של הנוקאאוט, נריץ
           const isKnockoutMatchday = [27, 30, 33].includes(league.currentMatchday);
           const shouldRunCL = isKnockoutMatchday ? (currentGlobalWeek >= league.currentMatchday) : (currentGlobalWeek >= targetWeek);
           
@@ -101,39 +99,33 @@ export class SimulationService {
     }
   }
 
-  /**
-   * 🏆 ניהול שלבי הנוקאאוט של ליגת האלופות
-   * בודק אם הגענו לנקודת מעבר (סיום בתים, סיום רבע גמר וכו') ומייצר את השלב הבא
-   */
   private async handleCLKnockoutLogic(league: LeagueDocument, globalWeek: number) {
     this.logger.log(`Entering handleCLKnockoutLogic. Matchday: ${league.currentMatchday}`);
+    const currentSeason = league.seasonNumber || 1;
     
-    // 1. מעבר משלב הבתים (מחזור 6 הסתיים -> אנחנו ב-7) לרבע הגמר (מחזור 27)
     if (league.currentMatchday >= 7 && league.currentMatchday < 27) {
       this.logger.log(`CL Logic: Matchday 7+ detected. Checking for matchday 27 matches.`);
-      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 27 });
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 27, seasonNumber: currentSeason });
       if (existingMatches === 0) {
         const qualified = await this.getCLQualifiedTeams(league._id);
-        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, qualified, 27);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, qualified, 27, currentSeason);
         
         league.currentMatchday = 27;
         await league.save();
         this.logger.log(`🏆 Quarter-Finals Generated. Jumped to Matchday 27.`);
       } else {
-        // אם המשחקים כבר קיימים אך משום מה אנחנו עדיין ב-7 (נדיר), נקפוץ
         league.currentMatchday = 27;
         await league.save();
         this.logger.log(`🏆 Quarter-Finals exist. Jumped to Matchday 27.`);
       }
     }
 
-    // 2. מעבר מרבע הגמר (מחזור 27 הסתיים -> אנחנו ב-28) לחצי הגמר (מחזור 30)
     if (league.currentMatchday >= 28 && league.currentMatchday < 30) {
       this.logger.log(`CL Logic: Matchday 28+ detected. Checking for matchday 30 matches.`);
-      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 30 });
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 30, seasonNumber: currentSeason });
       if (existingMatches === 0) {
-        const winners = await this.getWinnersFromMatchday(league._id, 27);
-        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 30);
+        const winners = await this.getWinnersFromMatchday(league._id, 27, currentSeason);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 30, currentSeason);
         
         league.currentMatchday = 30;
         await league.save();
@@ -145,12 +137,11 @@ export class SimulationService {
       }
     }
 
-    // 3. מעבר מחצי הגמר (מחזור 30 הסתיים -> אנחנו ב-31) לגמר (מחזור 33)
     if (league.currentMatchday >= 31 && league.currentMatchday < 33) {
-      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 33 });
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 33, seasonNumber: currentSeason });
       if (existingMatches === 0) {
-        const winners = await this.getWinnersFromMatchday(league._id, 30);
-        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 33);
+        const winners = await this.getWinnersFromMatchday(league._id, 30, currentSeason);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 33, currentSeason);
         
         league.currentMatchday = 33;
         await league.save();
@@ -189,29 +180,45 @@ export class SimulationService {
     return [...firstPlaces, ...bestSeconds];
   }
 
-  private async getWinnersFromMatchday(leagueId: Types.ObjectId, matchday: number): Promise<TeamDocument[]> {
-    const matches = await this.matchModel.find({ leagueId, matchday, status: 'finished' }).exec();
+  private async getWinnersFromMatchday(leagueId: Types.ObjectId, matchday: number, seasonNumber: number): Promise<TeamDocument[]> {
+    const matches = await this.matchModel.find({ leagueId, matchday, status: 'finished', seasonNumber }).exec();
     const winnerIds = matches.map(m => (m.score.home > m.score.away ? m.homeTeam : m.awayTeam));
     return this.teamModel.find({ _id: { $in: winnerIds } }).exec();
   }
 
   private async startNewSeason() {
-    this.logger.log('🔄 STARTING NEW SEASON TRANSITION');
+    this.logger.log('🔄 ARCHIVING SEASON AND STARTING NEW ONE');
 
-    const allLeagues = await this.leagueModel.find().exec();
-    const clLeague = allLeagues.find(l => ['Champions League', 'Europe'].includes(l.name));
-    const nationalLeagues = allLeagues.filter(l => !['Champions League', 'Europe'].includes(l.name));
-
-    if (allLeagues.length === 0) {
-      await this.leaguesService.seed();
-      await this.teamsService.seed();
-      return this.matchesService.seed();
+    const leagues = await this.leagueModel.find().exec();
+    
+    if (leagues.length === 0) {
+        await this.leaguesService.seed();
+        await this.teamsService.seed();
+        return this.matchesService.seed(1);
     }
 
-    await this.matchModel.deleteMany({});
+    const currentSeason = leagues[0]?.seasonNumber || 1;
+    const nextSeason = currentSeason + 1;
+
+    const clLeague = leagues.find(l => ['Champions League', 'Europe'].includes(l.name));
+    const nationalLeagues = leagues.filter(l => !['Champions League', 'Europe'].includes(l.name));
 
     for (const nl of nationalLeagues) {
       await this.teamModel.updateMany({ country: nl.country }, { $set: { leagueId: nl._id } });
+    }
+
+    const topTeamsIds: Types.ObjectId[] = [];
+    if (clLeague) {
+       for (const nl of nationalLeagues) {
+         const top4 = await this.teamModel.find({ leagueId: nl._id })
+           .sort({ "seasonStats.points": -1, "seasonStats.goalsFor": -1 })
+           .limit(4)
+           .exec();
+         
+         this.logger.log(`League ${nl.name} Top 4 (Season ${currentSeason}): ${top4.map(t => `${t.name} (${t.seasonStats?.points || 0})`).join(', ')}`);
+         
+         if (top4.length > 0) topTeamsIds.push(...top4.map(t => t._id as Types.ObjectId));
+       }
     }
 
     await this.teamModel.updateMany({}, {
@@ -223,19 +230,22 @@ export class SimulationService {
     });
     
     await this.playerModel.updateMany({}, { $set: { seasonStats: { goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 } } });
-    await this.leagueModel.updateMany({}, { $set: { currentMatchday: 1 } });
 
-    if (clLeague) {
-      const topTeamsIds: Types.ObjectId[] = [];
-      for (const nl of nationalLeagues) {
-        const top4 = await this.teamModel.find({ leagueId: nl._id }).sort({ "seasonStats.points": -1 }).limit(4).exec();
-        if (top4.length > 0) topTeamsIds.push(...top4.map(t => t._id as Types.ObjectId));
-      }
-      await this.teamModel.updateMany({ _id: { $in: topTeamsIds } }, { $set: { leagueId: clLeague._id } });
+    await this.leagueModel.updateMany({}, { 
+      $set: { 
+        currentMatchday: 1,
+        seasonNumber: nextSeason 
+      } 
+    });
+
+    if (clLeague && topTeamsIds.length > 0) {
+       this.logger.log(`Promoting ${topTeamsIds.length} teams to Champions League for Season ${nextSeason}`);
+       await this.teamModel.updateMany({ _id: { $in: topTeamsIds } }, { $set: { leagueId: clLeague._id } });
     }
 
-    await this.matchesService.seed();
-    return { message: 'New season started!' };
+    await this.matchesService.seed(nextSeason); 
+    
+    return { message: `Season ${currentSeason} archived. Season ${nextSeason} started!` };
   }
 
   private async simulateSingleMatch(match: MatchDocument, isCL = false) {
@@ -248,7 +258,6 @@ export class SimulationService {
     const diff = hP - aP;
 
     let hG = 0, aG = 0;
-    // הגדלת סיכוי להכרעה בנוקאאוט
     const isKnockout = isCL && match.matchday >= 27;
 
     if (diff > 10) { hG = Math.floor(Math.random() * 4) + 2; aG = Math.floor(Math.random() * 1); }
@@ -261,7 +270,6 @@ export class SimulationService {
       aG = total - hG;
     }
 
-    // 🔥 הכרעה חובה בנוקאאוט: אם נגמר בתיקו, מוסיפים גול לקבוצה החזקה
     if (isKnockout && hG === aG) {
        if (hP > aP) hG++; else aG++;
     }
