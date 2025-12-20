@@ -46,6 +46,13 @@ export class SimulationService {
         if (!league || !league.name) continue;
 
         const isCL = ['Champions League', 'Europe'].includes(league.name);
+        this.logger.log(`Processing league: ${league.name}, Matchday: ${league.currentMatchday}, isCL: ${isCL}`);
+        
+        // --- לוגיקת נוקאאוט ליגת האלופות ---
+        if (isCL) {
+          await this.handleCLKnockoutLogic(league, currentGlobalWeek);
+        }
+
         const remainingScheduled = await this.matchModel.countDocuments({
           leagueId: league._id,
           status: 'scheduled'
@@ -57,23 +64,12 @@ export class SimulationService {
             continue;
           }
         } else {
-          if (currentGlobalWeek < 4) {
-            this.logger.log(`Skipping Champions League: Current Global Week ${currentGlobalWeek} < 4`);
-            continue;
-          }
-
           const targetWeek = league.currentMatchday * 4;
-          const shouldRunCL = currentGlobalWeek >= targetWeek;
+          // מיוחד לנוקאאוט: אם אנחנו במחזור המטרה של הנוקאאוט, נריץ
+          const isKnockoutMatchday = [27, 30, 33].includes(league.currentMatchday);
+          const shouldRunCL = isKnockoutMatchday ? (currentGlobalWeek >= league.currentMatchday) : (currentGlobalWeek >= targetWeek);
           
-          if (!shouldRunCL) {
-            this.logger.log(`Skipping Champions League: Current Global Week ${currentGlobalWeek} < Target Week ${targetWeek} (Next CL Round: ${league.currentMatchday})`);
-            continue;
-          }
-
-          if (remainingScheduled === 0) {
-             this.logger.log(`Skipping Champions League: No matches scheduled for Matchday ${league.currentMatchday}`);
-             continue;
-          }
+          if (!shouldRunCL || remainingScheduled === 0) continue;
         }
 
         const matchesToPlay = await this.matchModel.find({
@@ -105,6 +101,100 @@ export class SimulationService {
     }
   }
 
+  /**
+   * 🏆 ניהול שלבי הנוקאאוט של ליגת האלופות
+   * בודק אם הגענו לנקודת מעבר (סיום בתים, סיום רבע גמר וכו') ומייצר את השלב הבא
+   */
+  private async handleCLKnockoutLogic(league: LeagueDocument, globalWeek: number) {
+    this.logger.log(`Entering handleCLKnockoutLogic. Matchday: ${league.currentMatchday}`);
+    
+    // 1. מעבר משלב הבתים (מחזור 6 הסתיים -> אנחנו ב-7) לרבע הגמר (מחזור 27)
+    if (league.currentMatchday >= 7 && league.currentMatchday < 27) {
+      this.logger.log(`CL Logic: Matchday 7+ detected. Checking for matchday 27 matches.`);
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 27 });
+      if (existingMatches === 0) {
+        const qualified = await this.getCLQualifiedTeams(league._id);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, qualified, 27);
+        
+        league.currentMatchday = 27;
+        await league.save();
+        this.logger.log(`🏆 Quarter-Finals Generated. Jumped to Matchday 27.`);
+      } else {
+        // אם המשחקים כבר קיימים אך משום מה אנחנו עדיין ב-7 (נדיר), נקפוץ
+        league.currentMatchday = 27;
+        await league.save();
+        this.logger.log(`🏆 Quarter-Finals exist. Jumped to Matchday 27.`);
+      }
+    }
+
+    // 2. מעבר מרבע הגמר (מחזור 27 הסתיים -> אנחנו ב-28) לחצי הגמר (מחזור 30)
+    if (league.currentMatchday >= 28 && league.currentMatchday < 30) {
+      this.logger.log(`CL Logic: Matchday 28+ detected. Checking for matchday 30 matches.`);
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 30 });
+      if (existingMatches === 0) {
+        const winners = await this.getWinnersFromMatchday(league._id, 27);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 30);
+        
+        league.currentMatchday = 30;
+        await league.save();
+        this.logger.log(`🏆 Semi-Finals Generated. Jumped to Matchday 30.`);
+      } else if (league.currentMatchday !== 30) {
+         league.currentMatchday = 30;
+         await league.save();
+         this.logger.log(`🏆 Semi-Finals exist. Jumped to Matchday 30.`);
+      }
+    }
+
+    // 3. מעבר מחצי הגמר (מחזור 30 הסתיים -> אנחנו ב-31) לגמר (מחזור 33)
+    if (league.currentMatchday >= 31 && league.currentMatchday < 33) {
+      const existingMatches = await this.matchModel.countDocuments({ leagueId: league._id, matchday: 33 });
+      if (existingMatches === 0) {
+        const winners = await this.getWinnersFromMatchday(league._id, 30);
+        await this.matchesService.generateKnockoutMatches(league._id as Types.ObjectId, winners, 33);
+        
+        league.currentMatchday = 33;
+        await league.save();
+        this.logger.log(`🏆 FINAL Generated. Jumped to Matchday 33.`);
+      } else if (league.currentMatchday !== 33) {
+        league.currentMatchday = 33;
+        await league.save();
+        this.logger.log(`🏆 FINAL exists. Jumped to Matchday 33.`);
+      }
+    }
+  }
+
+  private async getCLQualifiedTeams(leagueId: Types.ObjectId): Promise<TeamDocument[]> {
+    const teams = await this.teamModel.find({ leagueId }).exec();
+    const groupsMap: Record<string, TeamDocument[]> = {};
+
+    teams.forEach(t => {
+      const g = t.clGroup || 'A';
+      if (!groupsMap[g]) groupsMap[g] = [];
+      groupsMap[g].push(t);
+    });
+
+    const firstPlaces: TeamDocument[] = [];
+    const secondPlaces: TeamDocument[] = [];
+
+    Object.values(groupsMap).forEach(groupTeams => {
+      const sorted = groupTeams.sort((a, b) => (b.clStats?.points || 0) - (a.clStats?.points || 0));
+      if (sorted[0]) firstPlaces.push(sorted[0]);
+      if (sorted[1]) secondPlaces.push(sorted[1]);
+    });
+
+    const bestSeconds = secondPlaces
+      .sort((a, b) => (b.clStats?.points || 0) - (a.clStats?.points || 0))
+      .slice(0, 3);
+
+    return [...firstPlaces, ...bestSeconds];
+  }
+
+  private async getWinnersFromMatchday(leagueId: Types.ObjectId, matchday: number): Promise<TeamDocument[]> {
+    const matches = await this.matchModel.find({ leagueId, matchday, status: 'finished' }).exec();
+    const winnerIds = matches.map(m => (m.score.home > m.score.away ? m.homeTeam : m.awayTeam));
+    return this.teamModel.find({ _id: { $in: winnerIds } }).exec();
+  }
+
   private async startNewSeason() {
     this.logger.log('🔄 STARTING NEW SEASON TRANSITION');
 
@@ -121,10 +211,7 @@ export class SimulationService {
     await this.matchModel.deleteMany({});
 
     for (const nl of nationalLeagues) {
-      await this.teamModel.updateMany(
-        { country: nl.country },
-        { $set: { leagueId: nl._id } }
-      );
+      await this.teamModel.updateMany({ country: nl.country }, { $set: { leagueId: nl._id } });
     }
 
     await this.teamModel.updateMany({}, {
@@ -135,30 +222,16 @@ export class SimulationService {
       }
     });
     
-    await this.playerModel.updateMany({}, {
-      $set: { seasonStats: { goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 } }
-    });
-
+    await this.playerModel.updateMany({}, { $set: { seasonStats: { goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 } } });
     await this.leagueModel.updateMany({}, { $set: { currentMatchday: 1 } });
 
     if (clLeague) {
       const topTeamsIds: Types.ObjectId[] = [];
       for (const nl of nationalLeagues) {
-        const top4 = await this.teamModel.find({ leagueId: nl._id })
-          .sort({ "seasonStats.points": -1, "seasonStats.goalsFor": -1 })
-          .limit(4).exec();
-        
-        if (top4.length > 0) {
-          topTeamsIds.push(...top4.map(t => t._id as Types.ObjectId));
-        }
+        const top4 = await this.teamModel.find({ leagueId: nl._id }).sort({ "seasonStats.points": -1 }).limit(4).exec();
+        if (top4.length > 0) topTeamsIds.push(...top4.map(t => t._id as Types.ObjectId));
       }
-
-      if (topTeamsIds.length > 0) {
-        await this.teamModel.updateMany(
-          { _id: { $in: topTeamsIds } },
-          { $set: { leagueId: clLeague._id } }
-        );
-      }
+      await this.teamModel.updateMany({ _id: { $in: topTeamsIds } }, { $set: { leagueId: clLeague._id } });
     }
 
     await this.matchesService.seed();
@@ -175,6 +248,9 @@ export class SimulationService {
     const diff = hP - aP;
 
     let hG = 0, aG = 0;
+    // הגדלת סיכוי להכרעה בנוקאאוט
+    const isKnockout = isCL && match.matchday >= 27;
+
     if (diff > 10) { hG = Math.floor(Math.random() * 4) + 2; aG = Math.floor(Math.random() * 1); }
     else if (diff > 3) { hG = Math.floor(Math.random() * 3) + 1; aG = Math.floor(Math.random() * 2); }
     else if (diff < -10) { hG = Math.floor(Math.random() * 1); aG = Math.floor(Math.random() * 4) + 2; }
@@ -183,6 +259,11 @@ export class SimulationService {
       const total = Math.floor(Math.random() * 5);
       hG = Math.floor(total * (hP / (hP + aP)));
       aG = total - hG;
+    }
+
+    // 🔥 הכרעה חובה בנוקאאוט: אם נגמר בתיקו, מוסיפים גול לקבוצה החזקה
+    if (isKnockout && hG === aG) {
+       if (hP > aP) hG++; else aG++;
     }
 
     const events: MatchEvent[] = [];
@@ -211,14 +292,8 @@ export class SimulationService {
     else if (gF === gA) { s.draws++; s.points += 1; team.morale = Math.min(100, team.morale + 1); }
     else { s.losses++; team.morale = Math.max(0, team.morale - 5); }
     
-    if (isCL) {
-      team.clStats = s;
-      team.markModified('clStats');
-    } else {
-      team.seasonStats = s;
-      team.markModified('seasonStats');
-    }
-    
+    if (isCL) { team.clStats = s; team.markModified('clStats'); } 
+    else { team.seasonStats = s; team.markModified('seasonStats'); }
     await team.save();
   }
 

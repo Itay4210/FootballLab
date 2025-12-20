@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Match, MatchDocument } from './schemas/match.schema';
@@ -7,6 +7,8 @@ import { League, LeagueDocument } from '../leagues/schemas/league.schema';
 
 @Injectable()
 export class MatchesService {
+  private readonly logger = new Logger(MatchesService.name);
+
   constructor(
     @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
@@ -60,6 +62,30 @@ export class MatchesService {
     };
   }
 
+  async generateKnockoutMatches(leagueId: Types.ObjectId, qualifiedTeams: TeamDocument[], matchday: number): Promise<void> {
+    const matchesToInsert: Partial<Match>[] = [];
+    const shuffled = this.shuffleArray(qualifiedTeams);
+
+    for (let i = 0; i < shuffled.length; i += 2) {
+      if (!shuffled[i+1]) break;
+
+      matchesToInsert.push({
+        leagueId: leagueId,
+        matchday: matchday,
+        homeTeam: shuffled[i]._id,
+        awayTeam: shuffled[i + 1]._id,
+        score: { home: 0, away: 0 },
+        status: 'scheduled',
+        events: [],
+      });
+    }
+
+    if (matchesToInsert.length > 0) {
+      await this.matchModel.insertMany(matchesToInsert);
+      this.logger.log(`✅ Generated ${matchesToInsert.length} knockout matches for matchday ${matchday}`);
+    }
+  }
+
   private async generateChampionsLeagueFixtures(leagueId: Types.ObjectId, teams: TeamDocument[]): Promise<Partial<Match>[]> {
     if (teams.length !== 20) {
       console.warn(`[CL Fixtures] Expected 20 teams, got ${teams.length}. Skipping CL fixtures.`);
@@ -82,8 +108,6 @@ export class MatchesService {
         { _id: { $in: teamIds } },
         { $set: { clGroup: groupName } }
       ).exec();
-      
-      console.log(`[CL Seed] Group ${groupName}: ${groupTeams.map(t => t.name).join(', ')}`);
     }
 
     const groupMatchups = [
