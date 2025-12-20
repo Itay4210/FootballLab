@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { FootballAPI, type Team, type League } from './services/api';
+import { FootballAPI, type Team, type League, type Match } from './services/api';
 import { LeagueTable } from './components/LeagueTable';
 
 function App() {
   const [leagues, setLeagues] = useState<League[]>([]);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -26,19 +27,33 @@ function App() {
   useEffect(() => {
     if (!selectedLeague) return;
 
-    const fetchTable = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const data = await FootballAPI.getLeagueTable(selectedLeague);
-        setTeams(data);
+        const [teamsData, matchesData] = await Promise.all([
+          FootballAPI.getLeagueTable(selectedLeague),
+          FootballAPI.getMatches()
+        ]);
+        
+        setTeams(teamsData);
+        
+        // 🔥 Debug Log: Check if we receive matches for the selected league and matchday 27
+        const leagueMatches = matchesData.filter(m => m.leagueId === selectedLeague);
+        console.log(`[App] Loaded ${leagueMatches.length} matches for league ${selectedLeague}`);
+        
+        const knockoutMatches = leagueMatches.filter(m => m.matchday >= 27);
+        console.log(`[App] Found ${knockoutMatches.length} knockout matches (MD >= 27)`);
+        knockoutMatches.forEach(m => console.log(` - Matchday ${m.matchday}: ${m.homeTeam} vs ${m.awayTeam}`));
+
+        setMatches(leagueMatches);
       } catch (error) {
-        console.error("Failed to fetch table", error);
+        console.error("Failed to fetch data", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTable();
+    fetchData();
   }, [selectedLeague]);
 
   const selectedLeagueObj = leagues.find(l => l._id === selectedLeague);
@@ -73,11 +88,11 @@ function App() {
       </header>
 
       <main>
-        <LeagueTable teams={teams} loading={loading} leagueName={currentLeagueName}/>
+        <LeagueTable matches={matches} teams={teams} loading={loading} leagueName={currentLeagueName}/>
       </main>
 
     </div>
   )
 }
 
-export default App
+export default App;
