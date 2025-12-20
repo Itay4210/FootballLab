@@ -23,6 +23,9 @@ export class Match {
   @Prop({ type: Types.ObjectId, ref: 'League', required: true })
   leagueId: Types.ObjectId;
 
+  @Prop({ default: 1 })
+  seasonNumber: number;
+
   @Prop({ required: true })
   matchday: number; 
 

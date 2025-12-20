@@ -168,10 +168,23 @@ export const LeagueTable = ({ teams, matches, loading, leagueName }: Props) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
-          {teams.map((team, index) => (
-            <tr key={team._id} className={`hover:bg-slate-800/50 transition-colors ${index < 4 ? 'border-l-4 border-l-lab-accent' : ''}`}>
+          {teams.map((team, index) => {
+             const isTop4 = index < 4;
+             const isBundesliga = teams.length === 18; 
+             const maxMatches = isBundesliga ? 34 : 38;
+             const isSeasonFinished = teams.every(t => t.seasonStats.matches === maxMatches);
+             
+             return (
+            <tr key={team._id} className={`hover:bg-slate-800/50 transition-colors ${isTop4 ? 'border-l-4 border-l-lab-accent' : ''}`}>
               <td className="px-6 py-4 font-medium text-white">{index + 1}</td>
-              <td className="px-6 py-4 font-bold text-white">{team.name}</td>
+              <td className="px-6 py-4">
+                <div className="flex flex-col">
+                    <span className="font-bold text-white">{team.name}</span>
+                    {isSeasonFinished && isTop4 && (
+                        <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider mt-1">Qualified for Champions League</span>
+                    )}
+                </div>
+              </td>
               <td className="px-4 py-4 text-center">{team.seasonStats.matches}</td>
               <td className="px-2 py-4 text-center text-green-400">{team.seasonStats.wins}</td>
               <td className="px-2 py-4 text-center text-gray-400">{team.seasonStats.draws}</td>
@@ -179,7 +192,8 @@ export const LeagueTable = ({ teams, matches, loading, leagueName }: Props) => {
               <td className="px-4 py-4 text-center font-mono">{team.seasonStats.goalsFor - team.seasonStats.goalsAgainst}</td>
               <td className="px-6 py-4 text-center font-black text-xl text-lab-accent">{team.seasonStats.points}</td>
             </tr>
-          ))}
+          );
+          })}
         </tbody>
       </table>
     </div>

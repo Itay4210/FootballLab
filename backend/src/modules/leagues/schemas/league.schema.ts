@@ -16,6 +16,9 @@ export class League {
 
   @Prop({ default: '2025/2026' })
   season: string;
+
+  @Prop({ default: 1 })
+  seasonNumber: number;
 }
 
 export const LeagueSchema = SchemaFactory.createForClass(League);
