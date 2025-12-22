@@ -1,1 +1,355 @@
-import { Injectable } from '@nestjs/common';import { InjectModel } from '@nestjs/mongoose';import { Model } from 'mongoose';import { Player, PlayerDocument } from './schemas/player.schema';import { Team, TeamDocument } from '../teams/schemas/team.schema';@Injectable()export class PlayersService {  constructor(    @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,   ) {}  async findAll() {    return this.playerModel.find().populate('teamId', 'name').exec();   }  async seed() {    const playerCount = await this.playerModel.countDocuments();    if (playerCount > 0) return { message: 'Players already exist' };    const teams = await this.teamModel.find().exec();    if (teams.length === 0) return { message: 'No teams found!' };    const playersToInsert: Partial<Player>[] = [];    const SQUAD_DISTRIBUTION = [      { pos: 'GK', count: 3 },        { pos: 'CB', count: 4 },        { pos: 'LB', count: 2 },        { pos: 'RB', count: 2 },        { pos: 'CDM', count: 2 },       { pos: 'CM', count: 4 },        { pos: 'CAM', count: 2 },       { pos: 'LW', count: 2 },        { pos: 'RW', count: 2 },        { pos: 'ST', count: 2 },      ];    for (const team of teams) {      for (const role of SQUAD_DISTRIBUTION) {        for (let i = 1; i <= role.count; i++) {          let baseValue = 1000000;          if (role.pos === 'ST' || role.pos === 'CAM') baseValue = 3000000;          if (role.pos === 'GK') baseValue = 500000;          const age = Math.floor(Math.random() * 18) + 18;          playersToInsert.push({            name: `${team.name} ${role.pos} ${i}`,             age: age,            position: role.pos,            nationality: team.country,            teamId: team._id,            marketValue: baseValue * (Math.random() + 0.5),             seasonStats: {               goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0             }          });        }      }    }    await this.playerModel.insertMany(playersToInsert);    return {       message: `Seed Complete! Created ${playersToInsert.length} players. Each team has 25 balanced players.`     };  }}
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Player, PlayerDocument } from './schemas/player.schema';
+import { Team, TeamDocument } from '../teams/schemas/team.schema';
+@Injectable()
+export class PlayersService {
+  constructor(
+    @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
+    @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+  ) {}
+  async findAll() {
+    return this.playerModel.find().exec();
+  }
+  async seed() {
+    const playerCount = await this.playerModel.countDocuments();
+    if (playerCount > 0) return { message: 'Players already exist' };
+    const teams = await this.teamModel.find().exec();
+    if (teams.length === 0) return { message: 'No teams found!' };
+    const playersToInsert: Partial<Player>[] = [];
+    const SQUAD_DISTRIBUTION = [
+      { pos: 'GK', count: 3 },
+      { pos: 'CB', count: 4 },
+      { pos: 'LB', count: 2 },
+      { pos: 'RB', count: 2 },
+      { pos: 'CDM', count: 2 },
+      { pos: 'CM', count: 4 },
+      { pos: 'CAM', count: 2 },
+      { pos: 'LW', count: 2 },
+      { pos: 'RW', count: 2 },
+      { pos: 'ST', count: 2 },
+    ];
+
+    const NAMES_DB = {
+      England: {
+        first: [
+          'Harry',
+          'Jack',
+          'James',
+          'Oliver',
+          'Charlie',
+          'Jacob',
+          'George',
+          'William',
+          'Thomas',
+          'Daniel',
+          'Jordan',
+          'Kieran',
+          'Luke',
+          'Ben',
+          'Lewis',
+          'Mason',
+          'Declan',
+          'Bukayo',
+          'Phil',
+          'Trent',
+          'Jude',
+          'Raheem',
+          'Marcus',
+          'Callum',
+          'Conor',
+        ],
+        last: [
+          'Kane',
+          'Grealish',
+          'Maddison',
+          'Pickford',
+          'Stones',
+          'Maguire',
+          'Shaw',
+          'Walker',
+          'Rice',
+          'Saka',
+          'Foden',
+          'Alexander-Arnold',
+          'Bellingham',
+          'Sterling',
+          'Rashford',
+          'Wilson',
+          'Gallagher',
+          'Henderson',
+          'Trippier',
+          'Pope',
+          'Ramsdale',
+          'Chilwell',
+          'James',
+          'Mount',
+          'Phillips',
+        ],
+      },
+      Spain: {
+        first: [
+          'Pedri',
+          'Gavi',
+          'Rodri',
+          'Alvaro',
+          'Ferran',
+          'Dani',
+          'Marco',
+          'Pau',
+          'Aymeric',
+          'Unai',
+          'Kepa',
+          'Cesar',
+          'Jordi',
+          'Sergio',
+          'Iago',
+          'Mikel',
+          'Nico',
+          'Yeremy',
+          'Ansu',
+          'Alex',
+          'Jose',
+          'David',
+          'Koke',
+          'Marcos',
+          'Gerard',
+        ],
+        last: [
+          'Gonzalez',
+          'Torres',
+          'Carvajal',
+          'Asensio',
+          'Laporte',
+          'Simon',
+          'Arrizabalaga',
+          'Azpilicueta',
+          'Alba',
+          'Busquets',
+          'Aspas',
+          'Merino',
+          'Williams',
+          'Pino',
+          'Fati',
+          'Balde',
+          'Gaya',
+          'Raya',
+          'Llorente',
+          'Moreno',
+          'Olmo',
+          'Sarabia',
+          'Garcia',
+          'Rodri',
+          'Morata',
+        ],
+      },
+      Germany: {
+        first: [
+          'Joshua',
+          'Jamal',
+          'Leroy',
+          'Kai',
+          'Ilkay',
+          'Leon',
+          'Serge',
+          'Thomas',
+          'Manuel',
+          'Marc-Andre',
+          'Antonio',
+          'Niklas',
+          'David',
+          'Jonas',
+          'Timo',
+          'Niclas',
+          'Julian',
+          'Thilo',
+          'Lukas',
+          'Matthias',
+          'Kevin',
+          'Mario',
+          'Florian',
+          'Karim',
+          'Nico',
+        ],
+        last: [
+          'Kimmich',
+          'Musiala',
+          'Sane',
+          'Havertz',
+          'Gundogan',
+          'Goretzka',
+          'Gnabry',
+          'Muller',
+          'Neuer',
+          'ter Stegen',
+          'Rudiger',
+          'Sule',
+          'Raum',
+          'Hofmann',
+          'Werner',
+          'Fullkrug',
+          'Brandt',
+          'Kehrer',
+          'Klostermann',
+          'Ginter',
+          'Trapp',
+          'Gotze',
+          'Wirtz',
+          'Adeyemi',
+          'Schlotterbeck',
+        ],
+      },
+      Italy: {
+        first: [
+          'Gianluigi',
+          'Leonardo',
+          'Alessandro',
+          'Federico',
+          'Nicolo',
+          'Marco',
+          'Lorenzo',
+          'Ciro',
+          'Giacomo',
+          'Matteo',
+          'Giovanni',
+          'Francesco',
+          'Sandro',
+          'Bryan',
+          'Manuel',
+          'Davide',
+          'Alessio',
+          'Giorgio',
+          'Rafael',
+          'Domenico',
+          'Gianluca',
+          'Salvatore',
+          'Emerson',
+          'Jorginho',
+          'Moise',
+        ],
+        last: [
+          'Donnarumma',
+          'Bonucci',
+          'Bastoni',
+          'Chiesa',
+          'Barella',
+          'Verratti',
+          'Pellegrini',
+          'Immobile',
+          'Raspadori',
+          'Politano',
+          'Di Lorenzo',
+          'Acerbi',
+          'Tonali',
+          'Cristante',
+          'Locatelli',
+          'Frattesi',
+          'Romagnoli',
+          'Scalvini',
+          'Toloi',
+          'Berardi',
+          'Scamacca',
+          'Sirigu',
+          'Palmieri',
+          'Kean',
+          'Zaniolo',
+        ],
+      },
+      France: {
+        first: [
+          'Kylian',
+          'Antoine',
+          'Olivier',
+          'Ousmane',
+          'Kingsley',
+          'Adrien',
+          'Aurelien',
+          'Eduardo',
+          'Dayot',
+          'Ibrahima',
+          'Theo',
+          'Jules',
+          'Hugo',
+          'Mike',
+          'William',
+          'Marcus',
+          'Randal',
+          'Youssouf',
+          'Axel',
+          'Benjamin',
+          'Raphael',
+          'Lucas',
+          'Nabil',
+          'Moussa',
+          'Christopher',
+        ],
+        last: [
+          'Mbappe',
+          'Griezmann',
+          'Giroud',
+          'Dembele',
+          'Coman',
+          'Rabiot',
+          'Tchouameni',
+          'Camavinga',
+          'Upamecano',
+          'Konate',
+          'Hernandez',
+          'Kounde',
+          'Lloris',
+          'Maignan',
+          'Saliba',
+          'Thuram',
+          'Kolo Muani',
+          'Fofana',
+          'Disasi',
+          'Pavard',
+          'Varane',
+          'Digne',
+          'Fekir',
+          'Diaby',
+          'Nkunku',
+        ],
+      },
+    };
+
+    const getRandomName = (country: string) => {
+      const db = NAMES_DB[country] || NAMES_DB['England'];
+      const first = db.first[Math.floor(Math.random() * db.first.length)];
+      const last = db.last[Math.floor(Math.random() * db.last.length)];
+      return `${first} ${last}`;
+    };
+
+    for (const team of teams) {
+      for (const role of SQUAD_DISTRIBUTION) {
+        for (let i = 1; i <= role.count; i++) {
+          let baseValue = 1000000;
+          if (role.pos === 'ST' || role.pos === 'CAM') baseValue = 3000000;
+          if (role.pos === 'GK') baseValue = 500000;
+          const age = Math.floor(Math.random() * 18) + 18;
+
+          playersToInsert.push({
+            name: getRandomName(team.country),
+            age: age,
+            position: role.pos,
+            nationality: team.country,
+            teamId: team._id,
+            marketValue: baseValue * (Math.random() + 0.5),
+            seasonStats: {
+              goals: 0,
+              assists: 0,
+              matches: 0,
+              yellowCards: 0,
+              redCards: 0,
+            },
+          });
+        }
+      }
+    }
+    await this.playerModel.insertMany(playersToInsert);
+    return {
+      message: `Seed Complete! Created ${playersToInsert.length} players. Each team has 25 balanced players.`,
+    };
+  }
+}
