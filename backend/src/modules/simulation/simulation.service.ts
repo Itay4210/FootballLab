@@ -14,6 +14,7 @@ import { MatchesService } from '../matches/matches.service';
 import { TeamsService } from '../teams/teams.service';
 import { LeaguesService } from '../leagues/leagues.service';
 import { PlayersService } from '../players/players.service';
+
 @Injectable()
 export class SimulationService {
   private readonly logger = new Logger(SimulationService.name);
@@ -27,11 +28,13 @@ export class SimulationService {
     private readonly leaguesService: LeaguesService,
     private readonly playersService: PlayersService,
   ) {}
+
   @Cron('0 0 */3 * *')
   async handleCron() {
     this.logger.log('Running automatic simulation...');
     await this.runSeasonMatchday();
   }
+
   async resetData() {
     this.logger.warn('⚠️ RESETTING ALL DATA...');
     await this.matchModel.deleteMany({});
@@ -48,6 +51,7 @@ export class SimulationService {
     await this.matchesService.seed(1);
     return { message: 'Full Database Reset & Seed Complete' };
   }
+
   async runSeasonMatchday() {
     try {
       const leagues = await this.leagueModel.find().exec();
@@ -60,7 +64,7 @@ export class SimulationService {
         nationalLeagues[0];
       const currentGlobalWeek = mainLeague?.currentMatchday || 1;
       let finishedLeaguesCount = 0;
-      const overallResults: any[] = [];
+      const overallResults: { league: string; matchday: number }[] = [];
       for (const league of leagues) {
         if (!league || !league.name) continue;
         const isCL = ['Champions League', 'Europe'].includes(league.name);
@@ -128,6 +132,7 @@ export class SimulationService {
       return { status: 500, message: 'Internal Error' };
     }
   }
+
   private async handleCLKnockoutLogic(
     league: LeagueDocument,
   ) {
@@ -219,6 +224,7 @@ export class SimulationService {
       }
     }
   }
+
   private async getCLQualifiedTeams(
     leagueId: Types.ObjectId,
   ): Promise<TeamDocument[]> {
@@ -243,6 +249,7 @@ export class SimulationService {
       .slice(0, 3);
     return [...firstPlaces, ...bestSeconds];
   }
+
   private async getWinnersFromMatchday(
     leagueId: Types.ObjectId,
     matchday: number,
@@ -256,6 +263,7 @@ export class SimulationService {
     );
     return this.teamModel.find({ _id: { $in: winnerIds } }).exec();
   }
+
   private async startNewSeason() {
     this.logger.log('🔄 ARCHIVING SEASON AND STARTING NEW ONE');
     const leagues = await this.leagueModel.find().exec();
@@ -355,14 +363,14 @@ export class SimulationService {
       message: `Season ${currentSeason} archived. Season ${nextSeason} started!`,
     };
   }
+
   private async simulateSingleMatch(match: MatchDocument, isCL = false) {
     const homeTeam = await this.teamModel.findById(match.homeTeam);
     const awayTeam = await this.teamModel.findById(match.awayTeam);
     if (!homeTeam || !awayTeam) return;
     const homePlayers = await this.playerModel.find({ teamId: homeTeam._id });
     const awayPlayers = await this.playerModel.find({ teamId: awayTeam._id });
-    for (const p of homePlayers) await this.updatePlayerStats(p._id, 'match');
-    for (const p of awayPlayers) await this.updatePlayerStats(p._id, 'match');
+
     const hP =
       homeTeam.attackStrength +
       homeTeam.defenseStrength +
@@ -399,31 +407,116 @@ export class SimulationService {
       if (hP > aP) hG++;
       else aG++;
     }
+
+    const homeLineup = this.selectMatchSquad(homePlayers);
+    const awayLineup = this.selectMatchSquad(awayPlayers);
+
+    for (const p of homeLineup.starters) {
+      await this.updatePlayerStats(
+        p._id,
+        this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
+      );
+    }
+    for (const p of awayLineup.starters) {
+      await this.updatePlayerStats(
+        p._id,
+        this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
+      );
+    }
+
+    const homeSubs = this.pickSubstitutes(homeLineup.subs);
+    const awaySubs = this.pickSubstitutes(awayLineup.subs);
+
+    for (const p of homeSubs) {
+      await this.updatePlayerStats(
+        p._id,
+        this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
+      );
+    }
+    for (const p of awaySubs) {
+      await this.updatePlayerStats(
+        p._id,
+        this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
+      );
+    }
+
+    const homeActivePlayers = [...homeLineup.starters, ...homeSubs];
+    const awayActivePlayers = [...awayLineup.starters, ...awaySubs];
+
     const events: MatchEvent[] = [];
+
     for (let i = 0; i < hG; i++) {
-      const s = await this.pickScorer(homeTeam._id);
+      const s = this.pickScorerFromList(homeActivePlayers);
       if (s) {
+        const minute = Math.floor(Math.random() * 90) + 1;
         events.push({
-          minute: Math.floor(Math.random() * 90) + 1,
+          minute,
           type: 'goal',
           playerId: s._id,
           description: 'Goal',
         });
-        await this.updatePlayerStats(s._id, 'goal');
+        await this.updatePlayerStats(s._id, { goals: 1 });
+
+        if (Math.random() < 0.7) {
+          const a = this.pickAssisterFromList(homeActivePlayers, s._id);
+          if (a) {
+            events.push({
+              minute,
+              type: 'assist',
+              playerId: a._id,
+              description: 'Assist',
+            });
+            await this.updatePlayerStats(a._id, { assists: 1 });
+          }
+        }
       }
     }
     for (let i = 0; i < aG; i++) {
-      const s = await this.pickScorer(awayTeam._id);
+      const s = this.pickScorerFromList(awayActivePlayers);
       if (s) {
+        const minute = Math.floor(Math.random() * 90) + 1;
         events.push({
-          minute: Math.floor(Math.random() * 90) + 1,
+          minute,
           type: 'goal',
           playerId: s._id,
           description: 'Goal',
         });
-        await this.updatePlayerStats(s._id, 'goal');
+        await this.updatePlayerStats(s._id, { goals: 1 });
+
+        if (Math.random() < 0.7) {
+          const a = this.pickAssisterFromList(awayActivePlayers, s._id);
+          if (a) {
+            events.push({
+              minute,
+              type: 'assist',
+              playerId: a._id,
+              description: 'Assist',
+            });
+            await this.updatePlayerStats(a._id, { assists: 1 });
+          }
+        }
       }
     }
+
+    const totalCards = Math.floor(Math.random() * 4) + 1;
+    const allActive = [...homeActivePlayers, ...awayActivePlayers];
+    for (let i = 0; i < totalCards; i++) {
+      const p = allActive[Math.floor(Math.random() * allActive.length)];
+      if (!p) continue;
+      const isRed = Math.random() < 0.05;
+      const minute = Math.floor(Math.random() * 90) + 1;
+      events.push({
+        minute,
+        type: isRed ? 'redCard' : 'yellowCard',
+        playerId: p._id,
+        description: isRed ? 'Red Card' : 'Yellow Card',
+      });
+      await this.updatePlayerStats(p._id, {
+        yellowCards: isRed ? 0 : 1,
+        redCards: isRed ? 1 : 0,
+      });
+    }
+
     await this.updateTeamStats(homeTeam, hG, aG, isCL);
     await this.updateTeamStats(awayTeam, aG, hG, isCL);
     match.score = { home: hG, away: aG };
@@ -431,6 +524,7 @@ export class SimulationService {
     match.status = 'finished';
     await match.save();
   }
+
   private async updateTeamStats(
     team: TeamDocument,
     gF: number,
@@ -472,8 +566,60 @@ export class SimulationService {
     }
     await team.save();
   }
-  private async pickScorer(teamId: Types.ObjectId) {
-    const players = await this.playerModel.find({ teamId }).exec();
+
+  private selectMatchSquad(allPlayers: PlayerDocument[]) {
+
+    const sorted = allPlayers.sort(
+      (a, b) => (b.marketValue * Math.random()) - (a.marketValue * Math.random())
+    );
+
+    const starters: PlayerDocument[] = [];
+    const subs: PlayerDocument[] = [];
+    const reserves: PlayerDocument[] = [];
+
+    const popPos = (positions: string[]) => {
+      const idx = sorted.findIndex(p => positions.includes(p.position));
+      if (idx !== -1) {
+        return sorted.splice(idx, 1)[0];
+      }
+      return null;
+    };
+
+    const gk = popPos(['GK']);
+    if (gk) starters.push(gk);
+
+    for(let i=0; i<4; i++) {
+      const def = popPos(['CB', 'LB', 'RB']);
+      if(def) starters.push(def);
+    }
+
+    for(let i=0; i<3; i++) {
+      const mid = popPos(['CM', 'CDM', 'CAM']);
+      if(mid) starters.push(mid);
+    }
+
+    for(let i=0; i<3; i++) {
+      const att = popPos(['ST', 'FW', 'LW', 'RW']);
+      if(att) starters.push(att);
+    }
+
+    while(starters.length < 11 && sorted.length > 0) {
+      starters.push(sorted.shift()!);
+    }
+
+    subs.push(...sorted);
+
+    return { starters, subs, reserves };
+  }
+
+  private pickSubstitutes(availableSubs: PlayerDocument[]) {
+
+    const count = Math.floor(Math.random() * 3) + 3;
+    const shuffled = availableSubs.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  private pickScorerFromList(players: PlayerDocument[]) {
     if (!players.length) return null;
     const pool: PlayerDocument[] = [];
     for (const p of players) {
@@ -485,16 +631,87 @@ export class SimulationService {
     }
     return pool[Math.floor(Math.random() * pool.length)];
   }
+
+  private pickAssisterFromList(players: PlayerDocument[], scorerId: Types.ObjectId) {
+    const valid = players.filter(p => !p._id.equals(scorerId));
+    if (!valid.length) return null;
+    const pool: PlayerDocument[] = [];
+    for (const p of valid) {
+      let w = 1;
+      if (['CAM', 'LW', 'RW'].includes(p.position)) w = 10;
+      else if (['CM', 'CDM'].includes(p.position)) w = 6;
+      else if (['LB', 'RB'].includes(p.position)) w = 4;
+      for (let i = 0; i < w; i++) pool.push(p);
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   private async updatePlayerStats(
     playerId: Types.ObjectId,
-    type: 'goal' | 'match',
+    updates: Partial<{
+      goals: number;
+      assists: number;
+      matches: number;
+      yellowCards: number;
+      redCards: number;
+      cleanSheets: number;
+      tackles: number;
+      interceptions: number;
+      keyPasses: number;
+      saves: number;
+      distanceCovered: number;
+    }>,
   ) {
-    const update: any = {
-      $inc: { 'seasonStats.matches': type === 'match' ? 1 : 0 },
-    };
-    if (type === 'goal') {
-      update.$inc['seasonStats.goals'] = 1;
+    const incUpdate: Record<string, number> = {};
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined && value !== 0) {
+        incUpdate[`seasonStats.${key}`] = value;
+      }
     }
-    await this.playerModel.findByIdAndUpdate(playerId, update);
+    if (Object.keys(incUpdate).length > 0) {
+      await this.playerModel.findByIdAndUpdate(playerId, { $inc: incUpdate });
+    }
+  }
+
+  private generatePlayerMatchStats(
+    position: string,
+    cleanSheet: boolean,
+    teamGoals: number,
+    opponentGoals: number,
+  ) {
+    const stats = {
+      matches: 1,
+      tackles: 0,
+      interceptions: 0,
+      keyPasses: 0,
+      saves: 0,
+      distanceCovered: 0,
+      cleanSheets: 0,
+    };
+
+    if (position === 'GK') stats.distanceCovered = 4 + Math.random() * 2;
+    else if (['CM', 'CDM', 'CAM', 'LW', 'RW'].includes(position))
+      stats.distanceCovered = 10 + Math.random() * 3;
+    else stats.distanceCovered = 9 + Math.random() * 2;
+    stats.distanceCovered = parseFloat(stats.distanceCovered.toFixed(1));
+
+    if (position === 'GK') {
+      stats.saves = Math.floor(Math.random() * (opponentGoals + 5));
+      if (cleanSheet) stats.cleanSheets = 1;
+    } else if (['CB', 'LB', 'RB'].includes(position)) {
+      stats.tackles = Math.floor(Math.random() * 5);
+      stats.interceptions = Math.floor(Math.random() * 4);
+      if (cleanSheet) stats.cleanSheets = 1;
+    } else if (['CDM', 'CM'].includes(position)) {
+      stats.tackles = Math.floor(Math.random() * 4);
+      stats.interceptions = Math.floor(Math.random() * 3);
+      stats.keyPasses = Math.floor(Math.random() * 3);
+    } else {
+
+      stats.tackles = Math.floor(Math.random() * 2);
+      stats.keyPasses = Math.floor(Math.random() * 4);
+    }
+
+    return stats;
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { Match, MatchDocument } from './schemas/match.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
@@ -59,7 +59,7 @@ export class MatchesService {
     };
   }
   async findByTeam(teamId: string, seasonNumber?: number) {
-    const query: any = {
+    const query: FilterQuery<MatchDocument> = {
       $or: [
         { homeTeam: new Types.ObjectId(teamId) },
         { awayTeam: new Types.ObjectId(teamId) },
@@ -76,7 +76,16 @@ export class MatchesService {
       .sort({ matchday: 1 })
       .lean()
       .exec();
-    return matches.map((match: any) => ({
+
+    // Define the shape of the populated match
+    type PopulatedMatch = Omit<Match, 'homeTeam' | 'awayTeam' | 'leagueId'> & {
+        _id: Types.ObjectId;
+        homeTeam: { _id: Types.ObjectId; name: string };
+        awayTeam: { _id: Types.ObjectId; name: string };
+        leagueId?: { name: string };
+    };
+
+    return (matches as unknown as PopulatedMatch[]).map((match) => ({
       ...match,
       homeTeam: match.homeTeam._id,
       homeTeamName: match.homeTeam.name,

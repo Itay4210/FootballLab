@@ -1,17 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { Player, PlayerDocument } from './schemas/player.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
+
 @Injectable()
 export class PlayersService {
   constructor(
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
   ) {}
+
   async findAll() {
     return this.playerModel.find().exec();
   }
+
+  async getTopPlayers(leagueId: string, season: number, type: string) {
+
+    const teams = await this.teamModel.find({ leagueId: new Types.ObjectId(leagueId) }).select('_id');
+    const teamIds = teams.map(t => t._id);
+
+    const filter: FilterQuery<PlayerDocument> = { teamId: { $in: teamIds } };
+
+    if (['saves', 'cleanSheets'].includes(type)) {
+      filter.position = 'GK';
+    }
+
+    else if (['tackles', 'interceptions', 'keyPasses', 'goals', 'assists'].includes(type)) {
+
+       if (['tackles', 'interceptions', 'keyPasses'].includes(type)) {
+          filter.position = { $ne: 'GK' };
+       }
+    }
+
+    return this.playerModel.find(filter)
+      .sort({ [`seasonStats.${type}`]: -1 })
+      .limit(5)
+      .populate('teamId', 'name')
+      .exec();
+  }
+
   async seed() {
     const playerCount = await this.playerModel.countDocuments();
     if (playerCount > 0) return { message: 'Players already exist' };
@@ -30,7 +58,7 @@ export class PlayersService {
       { pos: 'RW', count: 2 },
       { pos: 'ST', count: 2 },
     ];
-    const NAMES_DB = {
+    const NAMES_DB: Record<string, { first: string[]; last: string[] }> = {
       England: {
         first: [
           'Harry',
@@ -338,6 +366,12 @@ export class PlayersService {
               matches: 0,
               yellowCards: 0,
               redCards: 0,
+              cleanSheets: 0,
+              tackles: 0,
+              interceptions: 0,
+              keyPasses: 0,
+              saves: 0,
+              distanceCovered: 0,
             },
           });
         }

@@ -29,7 +29,19 @@ export class Player {
   marketValue: number;
   @Prop({
     type: Object,
-    default: { goals: 0, assists: 0, matches: 0, yellowCards: 0, redCards: 0 },
+    default: {
+      goals: 0,
+      assists: 0,
+      matches: 0,
+      yellowCards: 0,
+      redCards: 0,
+      cleanSheets: 0,
+      tackles: 0,
+      interceptions: 0,
+      keyPasses: 0,
+      saves: 0,
+      distanceCovered: 0,
+    },
   })
   seasonStats: {
     goals: number;
@@ -37,6 +49,12 @@ export class Player {
     matches: number;
     yellowCards: number;
     redCards: number;
+    cleanSheets: number;
+    tackles: number;
+    interceptions: number;
+    keyPasses: number;
+    saves: number;
+    distanceCovered: number;
   };
 }
 export const PlayerSchema = SchemaFactory.createForClass(Player);

@@ -41,7 +41,7 @@ export class TeamsService {
         message: 'Run Leagues Seed first! (Only National Leagues should exist)',
       };
     const teamsToInsert: Partial<Team>[] = [];
-    const realTeams = {
+    const realTeams: Record<string, string[]> = {
       England: [
         'Man City',
         'Arsenal',
