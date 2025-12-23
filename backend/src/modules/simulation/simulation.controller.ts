@@ -7,7 +7,6 @@ export class SimulationController {
   runMatchday() {
     return this.simulationService.runSeasonMatchday();
   }
-
   @Post('reset')
   reset() {
     return this.simulationService.resetData();

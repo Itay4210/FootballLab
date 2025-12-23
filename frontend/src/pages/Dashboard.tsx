@@ -164,9 +164,27 @@ export function Dashboard() {
       );
     });
     setTeams(sortedTeams);
-
     const leagueTeamIds = new Set(sortedTeams.map((t) => t._id));
-    const leaguePlayers = allPlayers.filter((p) => leagueTeamIds.has(p.teamId));
+    const playerGoalsMap = new Map<string, number>();
+    leagueMatches.forEach((m) => {
+      if (m.status === "finished" && m.events) {
+        m.events.forEach((e) => {
+          if (e.type === "goal" && e.playerId) {
+            const current = playerGoalsMap.get(e.playerId) || 0;
+            playerGoalsMap.set(e.playerId, current + 1);
+          }
+        });
+      }
+    });
+    const leaguePlayers = allPlayers
+      .filter((p) => leagueTeamIds.has(p.teamId))
+      .map((p) => ({
+        ...p,
+        seasonStats: {
+          ...p.seasonStats,
+          goals: playerGoalsMap.get(p._id) || 0,
+        },
+      }));
     setFilteredPlayers(leaguePlayers);
   }, [
     selectedLeague,

@@ -6,7 +6,6 @@ import {
   type Match,
   type Player,
 } from "../services/api";
-
 export const TeamProfile = () => {
   const { teamId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -22,7 +21,6 @@ export const TeamProfile = () => {
     : 1;
   const [selectedSeason, setSelectedSeason] = useState(initialSeason);
   const [activeTab, setActiveTab] = useState<"fixtures" | "squad">("fixtures");
-
   useEffect(() => {
     FootballAPI.getMatches().then((allMatches) => {
       const seasons = Array.from(
@@ -32,7 +30,6 @@ export const TeamProfile = () => {
       setAvailableSeasons(sorted.length > 0 ? sorted : [1]);
     });
   }, []);
-
   useEffect(() => {
     if (teamId) {
       FootballAPI.getTeams().then((teams) =>
@@ -51,20 +48,16 @@ export const TeamProfile = () => {
       });
     }
   }, [teamId, selectedSeason]);
-
   useEffect(() => {
     setSearchParams({ season: selectedSeason.toString() });
   }, [selectedSeason, setSearchParams]);
-
   if (!team)
     return (
       <div className="p-10 text-center text-white">Loading Team Profile...</div>
     );
-
   const hasChampionsLeagueMatches = matches.some(
     (m) => m.leagueName?.includes("Champions") || m.leagueName === "Europe",
   );
-
   const filteredMatches = matches.filter((m) => {
     if (selectedCompetition === "all") return true;
     if (selectedCompetition === "Champions League") {
@@ -72,7 +65,6 @@ export const TeamProfile = () => {
     }
     return !m.leagueName?.includes("Champions") && m.leagueName !== "Europe";
   });
-
   return (
     <div className="container mx-auto px-4 py-8 animate-fade-in">
       <Link
@@ -81,7 +73,6 @@ export const TeamProfile = () => {
       >
         ← Back to Dashboard
       </Link>
-
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 border-b border-slate-800 pb-6 gap-4">
         <div>
           <h1 className="text-5xl font-black italic uppercase text-white">
@@ -114,7 +105,6 @@ export const TeamProfile = () => {
               Stats
             </button>
           </div>
-
           {}
           {activeTab === "fixtures" && hasChampionsLeagueMatches && (
             <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
@@ -150,7 +140,6 @@ export const TeamProfile = () => {
               </button>
             </div>
           )}
-
           <div className="flex flex-col items-end">
             <label className="text-[10px] text-slate-500 font-bold mb-1 uppercase">
               Select Season
@@ -169,7 +158,6 @@ export const TeamProfile = () => {
           </div>
         </div>
       </div>
-
       <div className="w-full max-w-4xl mx-auto">
         {activeTab === "fixtures" ? (
           <div>
@@ -243,7 +231,6 @@ export const TeamProfile = () => {
                               const p = allPlayers.find(
                                 (pl) => pl._id === e.playerId,
                               );
-
                               return (
                                 p && String(p.teamId) === String(match.homeTeam)
                               );
@@ -267,8 +254,7 @@ export const TeamProfile = () => {
                               );
                             })}
                         </div>
-
-                        {/* Away Goals - aligned to the left (towards center) */}
+                        {}
                         <div className="flex-1 flex flex-col items-start gap-1 text-[10px]">
                           {match.events
                             .filter((e) => e.type === "goal")
@@ -365,7 +351,6 @@ export const TeamProfile = () => {
     </div>
   );
 };
-
 const getMatchResultText = (match: Match, teamId: string) => {
   const isHome = match.homeTeam === teamId;
   const scoreA = isHome ? match.score.home : match.score.away;
@@ -374,7 +359,6 @@ const getMatchResultText = (match: Match, teamId: string) => {
   if (scoreA < scoreB) return "LOSS";
   return "DRAW";
 };
-
 const getMatchResultColor = (match: Match, teamId: string) => {
   const res = getMatchResultText(match, teamId);
   if (res === "WIN") return "bg-green-500/20 text-green-400";

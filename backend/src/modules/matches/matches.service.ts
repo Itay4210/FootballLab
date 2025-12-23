@@ -39,7 +39,7 @@ export class MatchesService {
       if (teamsInLeague.length < 2) continue;
       if (league.name === 'Champions League' || league.name === 'Europe') {
         const clFixtures = await this.generateChampionsLeagueFixtures(
-          league._id as Types.ObjectId,
+          league._id,
           teamsInLeague,
           seasonNumber,
         );
@@ -47,7 +47,7 @@ export class MatchesService {
       } else {
         const leagueFixtures = this.generateRoundRobin(
           teamsInLeague,
-          league._id as Types.ObjectId,
+          league._id,
           seasonNumber,
         );
         allMatchesToInsert.push(...leagueFixtures);
@@ -231,7 +231,7 @@ export class MatchesService {
     const numTeams = teams.length;
     const numRounds = (numTeams - 1) * 2;
     const matchesPerRound = numTeams / 2;
-    let rotation: Types.ObjectId[] = teams.map((t) => t._id as Types.ObjectId);
+    let rotation: Types.ObjectId[] = teams.map((t) => t._id);
     for (let round = 0; round < numRounds; round++) {
       const isSecondHalf = round >= numTeams - 1;
       for (let i = 0; i < matchesPerRound; i++) {

@@ -189,7 +189,7 @@ export class TeamsService {
           return bPower - aPower;
         })
         .slice(0, 4);
-      topTeamsIds.push(...top4.map((t) => t._id as Types.ObjectId));
+      topTeamsIds.push(...top4.map((t) => t._id));
     }
     if (topTeamsIds.length > 0) {
       await this.teamModel.updateMany(

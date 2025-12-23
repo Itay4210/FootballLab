@@ -1,12 +1,10 @@
 import type { Player, Team } from "../services/api";
 import { Link } from "react-router-dom";
-
 interface Props {
   players: Player[];
   teams: Team[];
   loading: boolean;
 }
-
 export const TopScorers = ({ players, teams, loading }: Props) => {
   if (loading)
     return (
@@ -15,15 +13,12 @@ export const TopScorers = ({ players, teams, loading }: Props) => {
       </div>
     );
   if (!players || players.length === 0) return null;
-
   const sortedPlayers = [...players]
     .sort((a, b) => (b.seasonStats?.goals || 0) - (a.seasonStats?.goals || 0))
     .slice(0, 10);
-
   const getTeamName = (teamId: string) => {
     return teams.find((t) => t._id === teamId)?.name || "Unknown";
   };
-
   return (
     <div className="bg-lab-card/30 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden shadow-xl">
       <div className="bg-slate-900 px-6 py-4 border-b border-slate-700">
@@ -43,7 +38,6 @@ export const TopScorers = ({ players, teams, loading }: Props) => {
           {sortedPlayers.map((player, index) => {
             const goals = player.seasonStats?.goals || 0;
             if (goals === 0 && index > 4) return null;
-
             return (
               <tr
                 key={player._id}

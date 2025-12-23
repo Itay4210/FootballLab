@@ -32,14 +32,12 @@ export class SimulationService {
     this.logger.log('Running automatic simulation...');
     await this.runSeasonMatchday();
   }
-
   async resetData() {
     this.logger.warn('⚠️ RESETTING ALL DATA...');
     await this.matchModel.deleteMany({});
     await this.playerModel.deleteMany({});
     await this.teamModel.deleteMany({});
     await this.leagueModel.deleteMany({});
-
     this.logger.log('Seeding Leagues...');
     await this.leaguesService.seed();
     this.logger.log('Seeding Teams...');
@@ -48,10 +46,8 @@ export class SimulationService {
     await this.playersService.seed();
     this.logger.log('Seeding Matches (Season 1)...');
     await this.matchesService.seed(1);
-
     return { message: 'Full Database Reset & Seed Complete' };
   }
-
   async runSeasonMatchday() {
     try {
       const leagues = await this.leagueModel.find().exec();
@@ -72,7 +68,7 @@ export class SimulationService {
           `Processing league: ${league.name}, Matchday: ${league.currentMatchday}, isCL: ${isCL}`,
         );
         if (isCL) {
-          await this.handleCLKnockoutLogic(league, currentGlobalWeek);
+          await this.handleCLKnockoutLogic(league);
         }
         const remainingScheduled = await this.matchModel.countDocuments({
           leagueId: league._id,
@@ -134,7 +130,6 @@ export class SimulationService {
   }
   private async handleCLKnockoutLogic(
     league: LeagueDocument,
-    globalWeek: number,
   ) {
     this.logger.log(
       `Entering handleCLKnockoutLogic. Matchday: ${league.currentMatchday}`,
@@ -152,7 +147,7 @@ export class SimulationService {
       if (existingMatches === 0) {
         const qualified = await this.getCLQualifiedTeams(league._id);
         await this.matchesService.generateKnockoutMatches(
-          league._id as Types.ObjectId,
+          league._id,
           qualified,
           27,
           currentSeason,
@@ -182,7 +177,7 @@ export class SimulationService {
           currentSeason,
         );
         await this.matchesService.generateKnockoutMatches(
-          league._id as Types.ObjectId,
+          league._id,
           winners,
           30,
           currentSeason,
@@ -209,7 +204,7 @@ export class SimulationService {
           currentSeason,
         );
         await this.matchesService.generateKnockoutMatches(
-          league._id as Types.ObjectId,
+          league._id,
           winners,
           33,
           currentSeason,
@@ -294,8 +289,7 @@ export class SimulationService {
         this.logger.log(
           `League ${nl.name} Top 4 (Season ${currentSeason}): ${top4.map((t) => `${t.name} (${t.seasonStats?.points || 0})`).join(', ')}`,
         );
-        if (top4.length > 0)
-          topTeamsIds.push(...top4.map((t) => t._id as Types.ObjectId));
+        if (top4.length > 0) topTeamsIds.push(...top4.map((t) => t._id));
       }
     }
     await this.teamModel.updateMany(
@@ -365,15 +359,10 @@ export class SimulationService {
     const homeTeam = await this.teamModel.findById(match.homeTeam);
     const awayTeam = await this.teamModel.findById(match.awayTeam);
     if (!homeTeam || !awayTeam) return;
-
     const homePlayers = await this.playerModel.find({ teamId: homeTeam._id });
     const awayPlayers = await this.playerModel.find({ teamId: awayTeam._id });
-
-    for (const p of homePlayers)
-      await this.updatePlayerStats(p._id as Types.ObjectId, 'match');
-    for (const p of awayPlayers)
-      await this.updatePlayerStats(p._id as Types.ObjectId, 'match');
-
+    for (const p of homePlayers) await this.updatePlayerStats(p._id, 'match');
+    for (const p of awayPlayers) await this.updatePlayerStats(p._id, 'match');
     const hP =
       homeTeam.attackStrength +
       homeTeam.defenseStrength +
@@ -417,10 +406,10 @@ export class SimulationService {
         events.push({
           minute: Math.floor(Math.random() * 90) + 1,
           type: 'goal',
-          playerId: s._id as Types.ObjectId,
+          playerId: s._id,
           description: 'Goal',
         });
-        await this.updatePlayerStats(s._id as Types.ObjectId, 'goal');
+        await this.updatePlayerStats(s._id, 'goal');
       }
     }
     for (let i = 0; i < aG; i++) {
@@ -429,10 +418,10 @@ export class SimulationService {
         events.push({
           minute: Math.floor(Math.random() * 90) + 1,
           type: 'goal',
-          playerId: s._id as Types.ObjectId,
+          playerId: s._id,
           description: 'Goal',
         });
-        await this.updatePlayerStats(s._id as Types.ObjectId, 'goal');
+        await this.updatePlayerStats(s._id, 'goal');
       }
     }
     await this.updateTeamStats(homeTeam, hG, aG, isCL);
@@ -496,7 +485,6 @@ export class SimulationService {
     }
     return pool[Math.floor(Math.random() * pool.length)];
   }
-
   private async updatePlayerStats(
     playerId: Types.ObjectId,
     type: 'goal' | 'match',
@@ -504,11 +492,9 @@ export class SimulationService {
     const update: any = {
       $inc: { 'seasonStats.matches': type === 'match' ? 1 : 0 },
     };
-
     if (type === 'goal') {
       update.$inc['seasonStats.goals'] = 1;
     }
-
     await this.playerModel.findByIdAndUpdate(playerId, update);
   }
 }

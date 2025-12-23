@@ -1,9 +1,7 @@
 import axios from "axios";
-
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
-
 export interface TeamStats {
   matches: number;
   points: number;
@@ -13,7 +11,6 @@ export interface TeamStats {
   goalsFor: number;
   goalsAgainst: number;
 }
-
 export interface Team {
   _id: string;
   name: string;
@@ -22,7 +19,6 @@ export interface Team {
   clGroup?: string;
   clStats?: TeamStats;
 }
-
 export interface Player {
   _id: string;
   name: string;
@@ -34,7 +30,6 @@ export interface Player {
     matches: number;
   };
 }
-
 export interface Match {
   _id: string;
   leagueId: string;
@@ -58,14 +53,12 @@ export interface Match {
     player?: Player;
   }[];
 }
-
 export interface League {
   _id: string;
   name: string;
   country: string;
   seasonNumber?: number;
 }
-
 export const FootballAPI = {
   getLeagues: async () => {
     const response = await api.get<League[]>("/leagues");

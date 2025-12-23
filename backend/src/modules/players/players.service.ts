@@ -30,7 +30,6 @@ export class PlayersService {
       { pos: 'RW', count: 2 },
       { pos: 'ST', count: 2 },
     ];
-
     const NAMES_DB = {
       England: {
         first: [
@@ -313,14 +312,12 @@ export class PlayersService {
         ],
       },
     };
-
     const getRandomName = (country: string) => {
       const db = NAMES_DB[country] || NAMES_DB['England'];
       const first = db.first[Math.floor(Math.random() * db.first.length)];
       const last = db.last[Math.floor(Math.random() * db.last.length)];
       return `${first} ${last}`;
     };
-
     for (const team of teams) {
       for (const role of SQUAD_DISTRIBUTION) {
         for (let i = 1; i <= role.count; i++) {
@@ -328,7 +325,6 @@ export class PlayersService {
           if (role.pos === 'ST' || role.pos === 'CAM') baseValue = 3000000;
           if (role.pos === 'GK') baseValue = 500000;
           const age = Math.floor(Math.random() * 18) + 18;
-
           playersToInsert.push({
             name: getRandomName(team.country),
             age: age,
