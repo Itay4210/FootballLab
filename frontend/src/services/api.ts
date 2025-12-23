@@ -23,11 +23,19 @@ export interface Player {
   _id: string;
   name: string;
   position: string;
-  teamId: string;
+  teamId: string | { _id: string; name: string };
   seasonStats: {
     goals: number;
     assists: number;
     matches: number;
+    yellowCards: number;
+    redCards: number;
+    cleanSheets?: number;
+    tackles?: number;
+    interceptions?: number;
+    keyPasses?: number;
+    saves?: number;
+    distanceCovered?: number;
   };
 }
 export interface Match {
@@ -47,7 +55,7 @@ export interface Match {
   leagueName?: string;
   events?: {
     minute: number;
-    type: "goal" | "card" | "sub";
+    type: "goal" | "card" | "sub" | "assist";
     playerId: string;
     description: string;
     player?: Player;
@@ -88,6 +96,10 @@ export const FootballAPI = {
   },
   getPlayers: async () => {
     const response = await api.get<Player[]>("/players");
+    return response.data;
+  },
+  getTopPlayers: async (leagueId: string, type: 'goals' | 'assists' | 'yellowCards' | 'redCards' | 'cleanSheets' | 'tackles' | 'interceptions' | 'keyPasses' | 'saves' | 'distanceCovered', season: number = 1) => {
+    const response = await api.get<Player[]>(`/players/top/${type}/${leagueId}?season=${season}`);
     return response.data;
   },
 };

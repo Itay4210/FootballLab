@@ -7,7 +7,7 @@ export class MatchEvent {
   minute: number;
   @Prop({
     required: true,
-    enum: ['goal', 'yellowCard', 'redCard', 'substitution', 'injury'],
+    enum: ['goal', 'yellowCard', 'redCard', 'substitution', 'injury', 'assist'],
   })
   type: string;
   @Prop({ type: Types.ObjectId, ref: 'Player', required: true })

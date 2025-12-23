@@ -9,7 +9,7 @@ import {
   type Player,
 } from "../services/api";
 import { LeagueTable } from "../components/LeagueTable";
-import { TopScorers } from "../components/TopScorers";
+import { TopPlayers } from "../components/TopPlayers";
 const emptyStats = (): TeamStats => ({
   matches: 0,
   points: 0,
@@ -30,8 +30,19 @@ export function Dashboard() {
   const [availableSeasons, setAvailableSeasons] = useState<number[]>([1]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
+  const [topScorers, setTopScorers] = useState<Player[]>([]);
+  const [topAssisters, setTopAssisters] = useState<Player[]>([]);
+  const [topYellowCards, setTopYellowCards] = useState<Player[]>([]);
+  const [topRedCards, setTopRedCards] = useState<Player[]>([]);
+  const [topCleanSheets, setTopCleanSheets] = useState<Player[]>([]);
+  const [topTackles, setTopTackles] = useState<Player[]>([]);
+  const [topKeyPasses, setTopKeyPasses] = useState<Player[]>([]);
+  const [topSaves, setTopSaves] = useState<Player[]>([]);
+  const [topInterceptions, setTopInterceptions] = useState<Player[]>([]);
+  const [topDistance, setTopDistance] = useState<Player[]>([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'standings' | 'stats'>('standings');
+
   const setSelectedLeague = (id: string) => {
     setSearchParams({ league: id });
   };
@@ -165,27 +176,39 @@ export function Dashboard() {
     });
     setTeams(sortedTeams);
     const leagueTeamIds = new Set(sortedTeams.map((t) => t._id));
-    const playerGoalsMap = new Map<string, number>();
-    leagueMatches.forEach((m) => {
-      if (m.status === "finished" && m.events) {
-        m.events.forEach((e) => {
-          if (e.type === "goal" && e.playerId) {
-            const current = playerGoalsMap.get(e.playerId) || 0;
-            playerGoalsMap.set(e.playerId, current + 1);
-          }
-        });
+
+    const fetchTopPlayers = async () => {
+      if (selectedLeague) {
+        try {
+          const [scorers, assisters, yellow, red, cleanSheets, tackles, keyPasses, saves, interceptions, distance] = await Promise.all([
+            FootballAPI.getTopPlayers(selectedLeague, 'goals', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'assists', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'yellowCards', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'redCards', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'cleanSheets', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'tackles', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'keyPasses', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'saves', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'interceptions', selectedSeason),
+            FootballAPI.getTopPlayers(selectedLeague, 'distanceCovered', selectedSeason),
+          ]);
+          setTopScorers(scorers);
+          setTopAssisters(assisters);
+          setTopYellowCards(yellow);
+          setTopRedCards(red);
+          setTopCleanSheets(cleanSheets);
+          setTopTackles(tackles);
+          setTopKeyPasses(keyPasses);
+          setTopSaves(saves);
+          setTopInterceptions(interceptions);
+          setTopDistance(distance);
+        } catch (err) {
+          console.error("Failed to fetch top players", err);
+        }
       }
-    });
-    const leaguePlayers = allPlayers
-      .filter((p) => leagueTeamIds.has(p.teamId))
-      .map((p) => ({
-        ...p,
-        seasonStats: {
-          ...p.seasonStats,
-          goals: playerGoalsMap.get(p._id) || 0,
-        },
-      }));
-    setFilteredPlayers(leaguePlayers);
+    };
+    fetchTopPlayers();
+
   }, [
     selectedLeague,
     selectedSeason,
@@ -243,8 +266,38 @@ export function Dashboard() {
           </div>
         </div>
       </header>
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
+
+      <div className="flex gap-6 mb-8 border-b border-slate-800">
+        <button
+          onClick={() => setActiveTab('standings')}
+          className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-colors relative ${
+            activeTab === 'standings'
+              ? 'text-lab-accent'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          League Table
+          {activeTab === 'standings' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-lab-accent shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab('stats')}
+          className={`pb-4 px-2 text-sm font-bold uppercase tracking-wider transition-colors relative ${
+            activeTab === 'stats'
+              ? 'text-lab-accent'
+              : 'text-slate-500 hover:text-slate-300'
+          }`}
+        >
+          Player Stats
+          {activeTab === 'stats' && (
+            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-lab-accent shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+          )}
+        </button>
+      </div>
+
+      <main>
+        {activeTab === 'standings' ? (
           <LeagueTable
             matches={matches}
             teams={teams}
@@ -252,14 +305,20 @@ export function Dashboard() {
             leagueName={currentLeagueName}
             selectedSeason={selectedSeason}
           />
-        </div>
-        <div>
-          <TopScorers
-            players={filteredPlayers}
-            teams={teams}
-            loading={loading}
-          />
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 animate-fade-in">
+            <TopPlayers players={topScorers} title="Top Scorers" icon="⚽" />
+            <TopPlayers players={topAssisters} title="Top Assisters" icon="👟" />
+            <TopPlayers players={topCleanSheets} title="Clean Sheets" icon="🧤" />
+            <TopPlayers players={topYellowCards} title="Yellow Cards" icon="🟨" />
+            <TopPlayers players={topRedCards} title="Red Cards" icon="🟥" />
+            <TopPlayers players={topTackles} title="Top Tacklers" icon="⚔️" />
+            <TopPlayers players={topKeyPasses} title="Key Passers" icon="🎯" />
+            <TopPlayers players={topInterceptions} title="Top Interceptors" icon="🛡️" />
+            <TopPlayers players={topSaves} title="Top Saves" icon="👐" />
+            <TopPlayers players={topDistance} title="Distance Runners" icon="🏃" />
+          </div>
+        )}
       </main>
     </div>
   );

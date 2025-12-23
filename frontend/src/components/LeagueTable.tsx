@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { Team, Match } from "../services/api";
+
 interface Props {
   teams: Team[];
   matches: Match[];
@@ -7,6 +8,7 @@ interface Props {
   leagueName?: string;
   selectedSeason?: number;
 }
+
 export const LeagueTable = ({
   teams,
   matches,
