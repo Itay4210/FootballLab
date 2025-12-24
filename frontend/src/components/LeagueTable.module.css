@@ -1,0 +1,417 @@
+.loading {
+  text-align: center;
+  padding: 2.5rem;
+  color: var(--color-lab-accent);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.noData {
+  text-align: center;
+  padding: 2.5rem;
+  color: #64748b;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.knockoutContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background-color: rgba(15, 23, 42, 0.4);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.knockoutTitle {
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-align: center;
+  color: #60a5fa;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-style: italic;
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+  padding-bottom: 1rem;
+}
+
+.knockoutGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .knockoutGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.knockoutColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.knockoutColumnSemi {
+  margin-top: 0;
+}
+@media (min-width: 768px) {
+  .knockoutColumnSemi {
+    margin-top: 3rem;
+  }
+}
+
+.knockoutColumnFinal {
+  margin-top: 0;
+}
+@media (min-width: 768px) {
+  .knockoutColumnFinal {
+    margin-top: 6rem;
+  }
+}
+
+.knockoutStageLabel {
+  text-align: center;
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.knockoutStageLabelFinal {
+  color: #eab308;
+}
+
+.tbdBox {
+  height: 5rem;
+  border: 1px dashed #1e293b;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.groupsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .groupsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .groupsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.groupCard {
+  background-color: rgba(30, 41, 59, 0.5);
+  border-radius: 0.5rem;
+  border: 1px solid #334155;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.groupHeader {
+  background-color: #0f172a;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.groupTitle {
+  font-weight: 700;
+  color: var(--color-lab-accent);
+}
+
+.groupStatus {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: monospace;
+}
+
+.groupTable {
+  width: 100%;
+  font-size: 11px;
+  text-align: left;
+  color: #d1d5db;
+  border-collapse: collapse;
+}
+
+.groupThead {
+  background-color: rgba(15, 23, 42, 0.5);
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.th {
+  padding: 0.5rem;
+}
+
+.thCenter {
+  text-align: center;
+}
+
+.thPoints {
+  text-align: center;
+  font-weight: 700;
+  color: white;
+}
+
+.tr {
+  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.trQualified {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.tdPos {
+  padding: 0.5rem;
+  color: #6b7280;
+}
+
+.tdClub {
+  padding: 0.5rem;
+}
+
+.clubNameContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.clubName {
+  font-weight: 700;
+  color: white;
+}
+
+.clubNameQualified {
+  color: #93c5fd;
+}
+
+.clubLink {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.clubLink:hover {
+  color: var(--color-lab-accent);
+}
+
+.qualifiedLabel {
+  font-size: 9px;
+  color: #60a5fa;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tdStat {
+  text-align: center;
+}
+
+.statWin {
+  color: #4ade80;
+}
+
+.statDraw {
+  color: #9ca3af;
+}
+
+.statLoss {
+  color: #f87171;
+}
+
+.tdPoints {
+  padding: 0.5rem;
+  text-align: center;
+  font-weight: 900;
+  color: var(--color-lab-accent);
+}
+
+.mainTableContainer {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+  background-color: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(4px);
+}
+
+.mainTable {
+  width: 100%;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #9ca3af;
+  border-collapse: collapse;
+}
+
+.mainThead {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  background-color: #0f172a;
+  color: #d1d5db;
+}
+
+.thMain {
+  padding: 1rem 1.5rem;
+}
+
+.thMainCenter {
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.trMain {
+  border-top: 1px solid #1e293b;
+  transition: background-color 0.15s;
+}
+
+.trMain:hover {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+.trTop4 {
+  border-left: 4px solid var(--color-lab-accent);
+}
+
+.tdMainPos {
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+  color: white;
+}
+
+.tdMainClub {
+  padding: 1rem 1.5rem;
+}
+
+.qualifiedText {
+  font-size: 10px;
+  color: #60a5fa;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.tdMainStat {
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.tdMainGD {
+  padding: 1rem 1rem;
+  text-align: center;
+  font-family: monospace;
+}
+
+.tdMainPoints {
+  padding: 1rem 1.5rem;
+  text-align: center;
+  font-weight: 900;
+  font-size: 1.25rem;
+  color: var(--color-lab-accent);
+}
+
+.card {
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border-width: 1px;
+  border-style: solid;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.15s;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+.cardBlue {
+  border-color: rgba(59, 130, 246, 0.3);
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.cardPurple {
+  border-color: rgba(168, 85, 247, 0.3);
+  background-color: rgba(168, 85, 247, 0.05);
+}
+
+.cardYellow {
+  border-color: rgba(234, 179, 8, 0.5);
+  background-color: rgba(234, 179, 8, 0.05);
+}
+
+.cardContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.cardTeamRow {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.cardTeamName {
+  font-weight: 700;
+}
+
+.cardTeamNameWinner {
+  color: white;
+}
+
+.cardTeamNameLoser {
+  color: #94a3b8;
+}
+
+.cardScore {
+  font-weight: 900;
+  color: var(--color-lab-accent);
+}
+
+.cardWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

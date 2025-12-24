@@ -3,18 +3,24 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Team, TeamDocument } from './schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
+import { Match, MatchDocument } from '../matches/schemas/match.schema';
+
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
     @InjectModel(League.name) private leagueModel: Model<LeagueDocument>,
+    @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
   ) {}
+
   async findAll() {
     return this.teamModel.find().populate('leagueId').exec();
   }
+
   async getTable(leagueId: string) {
     const objectId = new Types.ObjectId(leagueId);
     const teams = await this.teamModel.find({ leagueId: objectId }).exec();
+
     return teams.sort((a, b) => {
       const ptsDiff = b.seasonStats.points - a.seasonStats.points;
       if (ptsDiff !== 0) return ptsDiff;
@@ -22,24 +28,79 @@ export class TeamsService {
         (a.seasonStats.goalsFor || 0) - (a.seasonStats.goalsAgainst || 0);
       const goalDiffB =
         (b.seasonStats.goalsFor || 0) - (b.seasonStats.goalsAgainst || 0);
+
       if (goalDiffB - goalDiffA !== 0) return goalDiffB - goalDiffA;
       return (b.seasonStats.goalsFor || 0) - (a.seasonStats.goalsFor || 0);
     });
   }
+
+  async getTeamStatsForSeason(
+    teamId: string,
+    season?: number,
+    leagueId?: string,
+  ) {
+    const teamObjectId = new Types.ObjectId(teamId);
+
+    const matchFilter: any = {
+      status: 'finished',
+      $or: [{ homeTeam: teamObjectId }, { awayTeam: teamObjectId }],
+    };
+
+    if (season) matchFilter.seasonNumber = Number(season);
+    if (leagueId) matchFilter.leagueId = new Types.ObjectId(leagueId);
+
+    const matches = await this.matchModel.find(matchFilter).exec();
+
+    let stats = {
+      matches: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      goalsFor: 0,
+      goalsAgainst: 0,
+      points: 0,
+    };
+
+    matches.forEach((m) => {
+      stats.matches++;
+      const isHome = m.homeTeam.equals(teamObjectId);
+      const goalsFor = isHome ? m.score.home : m.score.away;
+      const goalsAgainst = isHome ? m.score.away : m.score.home;
+
+      stats.goalsFor += goalsFor;
+      stats.goalsAgainst += goalsAgainst;
+
+      if (goalsFor > goalsAgainst) {
+        stats.wins++;
+        stats.points += 3;
+      } else if (goalsFor === goalsAgainst) {
+        stats.draws++;
+        stats.points += 1;
+      } else {
+        stats.losses++;
+      }
+    });
+
+    return stats;
+  }
+
   async seed() {
     await this.teamModel.deleteMany({});
     await this.leagueModel.deleteMany({
       name: { $in: ['Champions League', 'Europe'] },
     });
+
     const nationalLeagues = await this.leagueModel
       .find({
         name: { $nin: ['Champions League', 'Europe'] },
       })
       .exec();
+
     if (nationalLeagues.length === 0)
       return {
         message: 'Run Leagues Seed first! (Only National Leagues should exist)',
       };
+
     const teamsToInsert: Partial<Team>[] = [];
     const realTeams: Record<string, string[]> = {
       England: [
@@ -151,12 +212,15 @@ export class TeamsService {
         'Clermont',
       ],
     };
+
     for (const league of nationalLeagues) {
       const leagueTeamNames = [...(realTeams[league.country] || [])];
       const targetCount = league.country === 'Germany' ? 18 : 20;
+
       for (let i = leagueTeamNames.length + 1; i <= targetCount; i++) {
         leagueTeamNames.push(`${league.country} Club ${i}`);
       }
+
       for (const teamName of leagueTeamNames) {
         const baseStr = Math.floor(Math.random() * 5) + 5;
         teamsToInsert.push({
@@ -171,12 +235,15 @@ export class TeamsService {
         });
       }
     }
+
     const createdTeams = await this.teamModel.insertMany(teamsToInsert);
+
     const championsLeague = await this.leagueModel.create({
       name: 'Champions League',
       country: 'Europe',
       currentMatchday: 1,
     });
+
     const topTeamsIds: Types.ObjectId[] = [];
     for (const league of nationalLeagues) {
       const leagueTeams = createdTeams.filter(
@@ -189,14 +256,17 @@ export class TeamsService {
           return bPower - aPower;
         })
         .slice(0, 4);
+
       topTeamsIds.push(...top4.map((t) => t._id));
     }
+
     if (topTeamsIds.length > 0) {
       await this.teamModel.updateMany(
         { _id: { $in: topTeamsIds } },
         { $set: { leagueId: championsLeague._id } },
       );
     }
+
     return {
       message: `Created ${teamsToInsert.length} teams and set up Champions League qualification.`,
     };

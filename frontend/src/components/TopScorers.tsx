@@ -15,9 +15,11 @@ export const TopScorers = ({ players, teams, loading }: Props) => {
   const sortedPlayers = [...players]
     .sort((a, b) => (b.seasonStats?.goals || 0) - (a.seasonStats?.goals || 0))
     .slice(0, 10);
-  const getTeamName = (teamId: string | { _id: string; name: string } | undefined) => {
+  const getTeamName = (
+    teamId: string | { _id: string; name: string } | undefined,
+  ) => {
     if (!teamId) return "Unknown";
-    if (typeof teamId === 'object') return teamId.name;
+    if (typeof teamId === "object") return teamId.name;
     return teams.find((t) => t._id === teamId)?.name || "Unknown";
   };
   return (
