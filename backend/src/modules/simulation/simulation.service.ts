@@ -133,9 +133,7 @@ export class SimulationService {
     }
   }
 
-  private async handleCLKnockoutLogic(
-    league: LeagueDocument,
-  ) {
+  private async handleCLKnockoutLogic(league: LeagueDocument) {
     this.logger.log(
       `Entering handleCLKnockoutLogic. Matchday: ${league.currentMatchday}`,
     );
@@ -568,9 +566,8 @@ export class SimulationService {
   }
 
   private selectMatchSquad(allPlayers: PlayerDocument[]) {
-
     const sorted = allPlayers.sort(
-      (a, b) => (b.marketValue * Math.random()) - (a.marketValue * Math.random())
+      (a, b) => b.marketValue * Math.random() - a.marketValue * Math.random(),
     );
 
     const starters: PlayerDocument[] = [];
@@ -578,7 +575,7 @@ export class SimulationService {
     const reserves: PlayerDocument[] = [];
 
     const popPos = (positions: string[]) => {
-      const idx = sorted.findIndex(p => positions.includes(p.position));
+      const idx = sorted.findIndex((p) => positions.includes(p.position));
       if (idx !== -1) {
         return sorted.splice(idx, 1)[0];
       }
@@ -588,22 +585,22 @@ export class SimulationService {
     const gk = popPos(['GK']);
     if (gk) starters.push(gk);
 
-    for(let i=0; i<4; i++) {
+    for (let i = 0; i < 4; i++) {
       const def = popPos(['CB', 'LB', 'RB']);
-      if(def) starters.push(def);
+      if (def) starters.push(def);
     }
 
-    for(let i=0; i<3; i++) {
+    for (let i = 0; i < 3; i++) {
       const mid = popPos(['CM', 'CDM', 'CAM']);
-      if(mid) starters.push(mid);
+      if (mid) starters.push(mid);
     }
 
-    for(let i=0; i<3; i++) {
+    for (let i = 0; i < 3; i++) {
       const att = popPos(['ST', 'FW', 'LW', 'RW']);
-      if(att) starters.push(att);
+      if (att) starters.push(att);
     }
 
-    while(starters.length < 11 && sorted.length > 0) {
+    while (starters.length < 11 && sorted.length > 0) {
       starters.push(sorted.shift()!);
     }
 
@@ -613,7 +610,6 @@ export class SimulationService {
   }
 
   private pickSubstitutes(availableSubs: PlayerDocument[]) {
-
     const count = Math.floor(Math.random() * 3) + 3;
     const shuffled = availableSubs.sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
@@ -632,8 +628,11 @@ export class SimulationService {
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  private pickAssisterFromList(players: PlayerDocument[], scorerId: Types.ObjectId) {
-    const valid = players.filter(p => !p._id.equals(scorerId));
+  private pickAssisterFromList(
+    players: PlayerDocument[],
+    scorerId: Types.ObjectId,
+  ) {
+    const valid = players.filter((p) => !p._id.equals(scorerId));
     if (!valid.length) return null;
     const pool: PlayerDocument[] = [];
     for (const p of valid) {
@@ -707,7 +706,6 @@ export class SimulationService {
       stats.interceptions = Math.floor(Math.random() * 3);
       stats.keyPasses = Math.floor(Math.random() * 3);
     } else {
-
       stats.tackles = Math.floor(Math.random() * 2);
       stats.keyPasses = Math.floor(Math.random() * 4);
     }

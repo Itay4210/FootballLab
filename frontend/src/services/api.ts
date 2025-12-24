@@ -18,6 +18,7 @@ export interface Team {
   seasonStats: TeamStats;
   clGroup?: string;
   clStats?: TeamStats;
+  leagueId?: string | { _id: string; name: string };
 }
 export interface Player {
   _id: string;
@@ -98,8 +99,40 @@ export const FootballAPI = {
     const response = await api.get<Player[]>("/players");
     return response.data;
   },
-  getTopPlayers: async (leagueId: string, type: 'goals' | 'assists' | 'yellowCards' | 'redCards' | 'cleanSheets' | 'tackles' | 'interceptions' | 'keyPasses' | 'saves' | 'distanceCovered', season: number = 1) => {
-    const response = await api.get<Player[]>(`/players/top/${type}/${leagueId}?season=${season}`);
+  getTopPlayers: async (
+    leagueId: string,
+    type:
+      | "goals"
+      | "assists"
+      | "yellowCards"
+      | "redCards"
+      | "cleanSheets"
+      | "tackles"
+      | "interceptions"
+      | "keyPasses"
+      | "saves"
+      | "distanceCovered",
+    season: number = 1,
+  ) => {
+    const response = await api.get<Player[]>(
+      `/players/top/${type}/${leagueId}?season=${season}`,
+    );
+    return response.data;
+  },
+  getPlayerStats: async (
+    playerId: string,
+    season?: number,
+    leagueId?: string,
+  ) => {
+    const response = await api.get(`/players/stats/${playerId}`, {
+      params: { season, leagueId },
+    });
+    return response.data;
+  },
+  getTeamStats: async (teamId: string, season?: number, leagueId?: string) => {
+    const response = await api.get(`/teams/stats/${teamId}`, {
+      params: { season, leagueId },
+    });
     return response.data;
   },
 };

@@ -296,12 +296,20 @@ export const TeamProfile = () => {
               <table className="w-full text-sm text-left text-gray-400 min-w-[800px]">
                 <thead className="text-xs uppercase bg-slate-900 text-gray-500">
                   <tr>
-                    <th className="px-4 py-3 sticky left-0 bg-slate-900 z-10">Pos</th>
-                    <th className="px-4 py-3 sticky left-[60px] bg-slate-900 z-10">Player</th>
+                    <th className="px-4 py-3 sticky left-0 bg-slate-900 z-10">
+                      Pos
+                    </th>
+                    <th className="px-4 py-3 sticky left-[60px] bg-slate-900 z-10">
+                      Player
+                    </th>
                     <th className="px-4 py-3 text-center">Apps</th>
                     <th className="px-4 py-3 text-center text-white">Goals</th>
-                    <th className="px-4 py-3 text-center text-blue-400">Assists</th>
-                    <th className="px-4 py-3 text-center text-yellow-500">YC</th>
+                    <th className="px-4 py-3 text-center text-blue-400">
+                      Assists
+                    </th>
+                    <th className="px-4 py-3 text-center text-yellow-500">
+                      YC
+                    </th>
                     <th className="px-4 py-3 text-center text-red-500">RC</th>
                     <th className="px-4 py-3 text-center">CS</th>
                     <th className="px-4 py-3 text-center">Tackles</th>
@@ -352,7 +360,9 @@ export const TeamProfile = () => {
                           {player.seasonStats?.keyPasses || 0}
                         </td>
                         <td className="px-4 py-3 text-center text-blue-300">
-                          {(player.seasonStats?.distanceCovered || 0).toFixed(1)}
+                          {(player.seasonStats?.distanceCovered || 0).toFixed(
+                            1,
+                          )}
                         </td>
                       </tr>
                     ))}

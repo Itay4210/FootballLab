@@ -77,12 +77,11 @@ export class MatchesService {
       .lean()
       .exec();
 
-    // Define the shape of the populated match
     type PopulatedMatch = Omit<Match, 'homeTeam' | 'awayTeam' | 'leagueId'> & {
-        _id: Types.ObjectId;
-        homeTeam: { _id: Types.ObjectId; name: string };
-        awayTeam: { _id: Types.ObjectId; name: string };
-        leagueId?: { name: string };
+      _id: Types.ObjectId;
+      homeTeam: { _id: Types.ObjectId; name: string };
+      awayTeam: { _id: Types.ObjectId; name: string };
+      leagueId?: { name: string };
     };
 
     return (matches as unknown as PopulatedMatch[]).map((match) => ({

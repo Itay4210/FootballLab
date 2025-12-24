@@ -1,0 +1,76 @@
+.card {
+  background-color: rgba(15, 23, 42, 0.5);
+  border: 1px solid #1e293b;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rankSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rank {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: #475569;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+}
+
+.nameLink {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: white;
+  transition: color 0.15s;
+  text-decoration: none;
+}
+
+.item:hover .nameLink {
+  color: var(--color-lab-accent);
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}
+
+.teamName {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.statValue {
+  font-size: 1.125rem;
+  font-weight: 900;
+  color: var(--color-lab-accent);
+}

@@ -1,0 +1,209 @@
+.container {
+  min-height: 100vh;
+  padding: 1.25rem;
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding: 2.5rem;
+  }
+}
+
+.header {
+  margin-bottom: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .header {
+    flex-direction: row;
+  }
+}
+
+.title {
+  font-size: 2.25rem;
+  line-height: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-image: linear-gradient(to right, var(--color-lab-accent), #3b82f6);
+}
+
+.subtitle {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.compareLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #1e293b;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-lab-accent);
+  border: 1px solid #334155;
+  transition: background-color 0.15s ease-in-out;
+  text-decoration: none;
+}
+
+.compareLink:hover {
+  background-color: #334155;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.seasonSelector {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.seasonLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.seasonSelect {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-lab-accent);
+  outline: none;
+}
+
+.seasonSelect:focus {
+  border-color: var(--color-lab-accent);
+}
+
+.leagueSelector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.leagueButton {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.15s ease-in-out;
+  border: none;
+  cursor: pointer;
+}
+
+.leagueButtonActive {
+  background-color: var(--color-lab-accent);
+  color: var(--color-lab-dark);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+.leagueButtonInactive {
+  background-color: var(--color-lab-card);
+  color: #cbd5e1;
+}
+
+.leagueButtonInactive:hover {
+  background-color: #334155;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.tabButton {
+  padding-bottom: 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color 0.15s ease-in-out;
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.tabButtonActive {
+  color: var(--color-lab-accent);
+}
+
+.tabButtonInactive {
+  color: #64748b;
+}
+
+.tabButtonInactive:hover {
+  color: #cbd5e1;
+}
+
+.activeIndicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0.125rem;
+  background-color: var(--color-lab-accent);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@media (min-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

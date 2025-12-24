@@ -3,12 +3,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { Player, PlayerDocument } from './schemas/player.schema';
 import { Team, TeamDocument } from '../teams/schemas/team.schema';
+import { Match, MatchDocument } from '../matches/schemas/match.schema';
 
 @Injectable()
 export class PlayersService {
   constructor(
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
+    @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
   ) {}
 
   async findAll() {
@@ -16,28 +18,90 @@ export class PlayersService {
   }
 
   async getTopPlayers(leagueId: string, season: number, type: string) {
-
-    const teams = await this.teamModel.find({ leagueId: new Types.ObjectId(leagueId) }).select('_id');
-    const teamIds = teams.map(t => t._id);
+    const teams = await this.teamModel
+      .find({ leagueId: new Types.ObjectId(leagueId) })
+      .select('_id');
+    const teamIds = teams.map((t) => t._id);
 
     const filter: FilterQuery<PlayerDocument> = { teamId: { $in: teamIds } };
 
     if (['saves', 'cleanSheets'].includes(type)) {
       filter.position = 'GK';
+    } else if (
+      ['tackles', 'interceptions', 'keyPasses', 'goals', 'assists'].includes(
+        type,
+      )
+    ) {
+      if (['tackles', 'interceptions', 'keyPasses'].includes(type)) {
+        filter.position = { $ne: 'GK' };
+      }
     }
 
-    else if (['tackles', 'interceptions', 'keyPasses', 'goals', 'assists'].includes(type)) {
-
-       if (['tackles', 'interceptions', 'keyPasses'].includes(type)) {
-          filter.position = { $ne: 'GK' };
-       }
-    }
-
-    return this.playerModel.find(filter)
+    return this.playerModel
+      .find(filter)
       .sort({ [`seasonStats.${type}`]: -1 })
       .limit(5)
       .populate('teamId', 'name')
       .exec();
+  }
+
+  async getPlayerStatsForSeason(
+    playerId: string,
+    season?: number,
+    leagueId?: string,
+  ) {
+    const playerObjectId = new Types.ObjectId(playerId);
+
+    const matchFilter: any = {
+      status: 'finished',
+      'events.playerId': playerObjectId,
+    };
+
+    if (season) matchFilter.seasonNumber = Number(season);
+    if (leagueId) matchFilter.leagueId = new Types.ObjectId(leagueId);
+
+    const stats = await this.matchModel.aggregate([
+      {
+        $match: matchFilter,
+      },
+      { $unwind: '$events' },
+      { $match: { 'events.playerId': playerObjectId } },
+      {
+        $group: {
+          _id: null,
+          goals: { $sum: { $cond: [{ $eq: ['$events.type', 'goal'] }, 1, 0] } },
+          assists: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'assist'] }, 1, 0] },
+          },
+          yellowCards: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'yellowCard'] }, 1, 0] },
+          },
+          redCards: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'redCard'] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    const matchesCount = await this.matchModel.countDocuments(matchFilter);
+
+    const result = stats[0] || {
+      goals: 0,
+      assists: 0,
+      yellowCards: 0,
+      redCards: 0,
+    };
+    return {
+      ...result,
+      matches: matchesCount,
+
+      cleanSheets: 0,
+      tackles: 0,
+      interceptions: 0,
+      keyPasses: 0,
+      saves: 0,
+      distanceCovered: 0,
+    };
   }
 
   async seed() {
@@ -142,6 +206,7 @@ export class PlayersService {
           'Koke',
           'Marcos',
           'Gerard',
+          'Matthias',
         ],
         last: [
           'Gonzalez',
