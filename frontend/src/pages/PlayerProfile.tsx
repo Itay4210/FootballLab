@@ -93,7 +93,7 @@ export const PlayerProfile = () => {
 
         setStatsHistory(sortedHistory);
       } catch (err) {
-        console.error(err);
+
       }
     };
     fetchData();

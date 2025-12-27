@@ -68,6 +68,12 @@ export interface League {
   country: string;
   seasonNumber?: number;
 }
+export interface SeasonSummary {
+  season: number;
+  retiredPlayers: { name: string; age: number; strength: number; teamName: string }[];
+  transfers: { playerName: string; fromTeam: string; toTeam: string; fee: number }[];
+  mostImprovedPlayer: { name: string; oldStrength: number; newStrength: number; teamName: string };
+}
 export const FootballAPI = {
   getLeagues: async () => {
     const response = await api.get<League[]>("/leagues");
@@ -137,6 +143,10 @@ export const FootballAPI = {
   },
   runSimulation: async () => {
     const response = await api.post("/simulation/run");
+    return response.data;
+  },
+  getSeasonSummary: async () => {
+    const response = await api.get<SeasonSummary>("/simulation/summary");
     return response.data;
   },
 };

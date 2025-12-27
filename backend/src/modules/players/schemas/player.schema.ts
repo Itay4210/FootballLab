@@ -27,6 +27,8 @@ export class Player {
   teamId: Types.ObjectId;
   @Prop({ default: 100000 })
   marketValue: number;
+  @Prop({ default: 60, min: 1, max: 99 })
+  strength: number;
   @Prop({
     type: Object,
     default: {

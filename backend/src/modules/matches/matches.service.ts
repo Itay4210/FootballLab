@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types, FilterQuery } from 'mongoose';
 import { Match, MatchDocument } from './schemas/match.schema';
@@ -6,7 +6,6 @@ import { Team, TeamDocument } from '../teams/schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
 @Injectable()
 export class MatchesService {
-  private readonly logger = new Logger(MatchesService.name);
   constructor(
     @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,
@@ -116,9 +115,6 @@ export class MatchesService {
     }
     if (matchesToInsert.length > 0) {
       await this.matchModel.insertMany(matchesToInsert);
-      this.logger.log(
-        `✅ Generated ${matchesToInsert.length} knockout matches for matchday ${matchday}, Season ${seasonNumber}`,
-      );
     }
   }
   private async generateChampionsLeagueFixtures(
@@ -127,9 +123,6 @@ export class MatchesService {
     seasonNumber: number,
   ): Promise<Partial<Match>[]> {
     if (teams.length !== 20) {
-      console.warn(
-        `[CL Fixtures] Expected 20 teams, got ${teams.length}. Skipping CL fixtures.`,
-      );
       return [];
     }
     const matchesToInsert: Partial<Match>[] = [];
@@ -166,18 +159,11 @@ export class MatchesService {
       }
     }
     if (!success) {
-      this.logger.warn(
-        `Failed to generate valid CL groups after ${attempts} attempts (Constraint: No same country). Falling back to random.`,
-      );
       const shuffledTeams = this.shuffleArray(teams);
       groups = [[], [], [], [], []];
       for (let i = 0; i < 5; i++) {
         groups[i] = shuffledTeams.slice(i * 4, (i + 1) * 4);
       }
-    } else {
-      this.logger.log(
-        `✅ Successfully generated valid CL groups after ${attempts} attempts.`,
-      );
     }
     for (let i = 0; i < 5; i++) {
       const groupTeams = groups[i];
