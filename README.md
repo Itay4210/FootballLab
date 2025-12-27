@@ -1,6 +1,6 @@
-# FootbalLab
+# FootballLab
 
-FootbalLab is a comprehensive football simulation and management platform. It allows users to simulate football seasons, track league standings, manage teams and players, and experience the evolution of a football world over time.
+FootballLab is a comprehensive football simulation and management platform. It allows users to simulate football seasons, track league standings, manage teams and players, and experience the evolution of a football world over time.
 
 ![League Table](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%282%29.png)
 *Live League Standings across multiple European leagues*
@@ -46,8 +46,8 @@ Before running the project, ensure you have the following installed:
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/Itay4210/FootbalLab.git
-    cd FootbalLab
+    git clone https://github.com/Itay4210/FootballLab.git
+    cd FootballLab
     ```
 
 2.  **Install Backend Dependencies**
@@ -100,7 +100,7 @@ The frontend application will typically be available at `http://localhost:5173`.
 ## 📂 Project Structure
 
 ```
-FootbalLab/
+FootballLab/
 ├── backend/            # NestJS API application
 │   ├── src/
 │   │   ├── modules/    # Feature modules (Leagues, Matches, Players, etc.)
