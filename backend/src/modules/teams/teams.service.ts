@@ -51,7 +51,7 @@ export class TeamsService {
 
     const matches = await this.matchModel.find(matchFilter).exec();
 
-    let stats = {
+    const stats = {
       matches: 0,
       wins: 0,
       draws: 0,

@@ -6,13 +6,11 @@ import {
   type Team,
   type Player,
 } from "../services/api";
+import styles from "./ComparisonPage.module.css";
 
 export const ComparisonPage = () => {
-  const [compareType, setCompareType] = useState<"players" | "teams">(
-    "players",
-  );
+  const [compareType, setCompareType] = useState<"players" | "teams">("players");
   const [leagues, setLeagues] = useState<League[]>([]);
-
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
 
@@ -22,6 +20,7 @@ export const ComparisonPage = () => {
   const [statsA, setStatsA] = useState<any>(null);
   const [statsB, setStatsB] = useState<any>(null);
 
+  const [isSearchOpen, setIsSearchOpen] = useState<"A" | "B" | null>(null);
   const [maxSeason, setMaxSeason] = useState(1);
 
   useEffect(() => {
@@ -38,7 +37,7 @@ export const ComparisonPage = () => {
 
         const maxS = Math.max(
           ...leaguesData.map((l) => l.seasonNumber || 1),
-          1,
+          1
         );
         setMaxSeason(maxS);
       } catch (error) {
@@ -55,404 +54,430 @@ export const ComparisonPage = () => {
     setStatsB(null);
   }, [compareType]);
 
+  const handleSelect = (entity: any) => {
+    if (isSearchOpen === "A") {
+      setEntityA(entity);
+    } else if (isSearchOpen === "B") {
+      setEntityB(entity);
+    }
+    setIsSearchOpen(null);
+  };
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6">
-      <div className="container mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+    <div className={styles.container}>
+      {}
+      <header className={styles.header}>
+        <div className={styles.headerContent}>
           <div className="flex items-center gap-4">
             <Link
               to="/"
-              className="px-4 py-2 bg-slate-800 rounded-lg text-sm font-bold text-slate-300 border border-slate-700 hover:bg-slate-700 transition-colors"
+              className={styles.backLink}
             >
               ← Back
             </Link>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-lab-accent to-blue-500">
-              Head-to-Head Comparison
+            <h1 className={styles.title}>
+              Compare {compareType === "players" ? "Players" : "Teams"}
             </h1>
           </div>
 
-          <select
-            value={compareType}
-            onChange={(e) => setCompareType(e.target.value as any)}
-            className="bg-slate-800 border border-slate-700 rounded px-4 py-2 outline-none focus:border-lab-accent text-sm font-bold text-slate-300"
-          >
-            <option value="players">Players</option>
-            <option value="teams">Teams</option>
-          </select>
+          <div className={styles.toggleContainer}>
+            <button
+              onClick={() => setCompareType("players")}
+              className={`${styles.toggleButton} ${compareType === "players" ? styles.toggleButtonActive : ""}`}
+            >
+              Players
+            </button>
+            <button
+              onClick={() => setCompareType("teams")}
+              className={`${styles.toggleButton} ${compareType === "teams" ? styles.toggleButtonActive : ""}`}
+            >
+              Teams
+            </button>
+          </div>
         </div>
+      </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 relative">
+      <div className={styles.mainContent}>
+        {}
+        <div className={styles.comparisonArea}>
+
           {}
-          <div className="hidden md:flex absolute inset-0 items-center justify-center pointer-events-none z-10">
-            <div className="bg-lab-accent text-slate-950 font-black p-4 rounded-full shadow-[0_0_20px_rgba(0,255,135,0.5)] text-xl">
-              VS
-            </div>
+          <div className={styles.vsBadge}>
+            VS
           </div>
 
           {}
-          <ComparisonCard
+          <EntityCard
+            side="A"
             type={compareType}
-            data={entityA}
-            onSelect={setEntityA}
-            list={compareType === "players" ? allPlayers : allTeams}
-            label="Entity A"
-            allTeams={allTeams}
+            entity={entityA}
+            onRemove={() => setEntityA(null)}
+            onAdd={() => setIsSearchOpen("A")}
             leagues={leagues}
+            allTeams={allTeams}
             maxSeason={maxSeason}
             onStatsUpdate={setStatsA}
+            stats={statsA}
+            isCompact={true}
           />
 
           {}
-          <ComparisonCard
+          <EntityCard
+            side="B"
             type={compareType}
-            data={entityB}
-            onSelect={setEntityB}
-            list={compareType === "players" ? allPlayers : allTeams}
-            label="Entity B"
-            allTeams={allTeams}
+            entity={entityB}
+            onRemove={() => setEntityB(null)}
+            onAdd={() => setIsSearchOpen("B")}
             leagues={leagues}
+            allTeams={allTeams}
             maxSeason={maxSeason}
             onStatsUpdate={setStatsB}
+            stats={statsB}
+            isCompact={true}
           />
         </div>
 
         {}
         {entityA && entityB && statsA && statsB && (
-          <StatsTable statsA={statsA} statsB={statsB} type={compareType} />
+          <div className={styles.comparisonStatsContainer}>
+            <ComparisonStats statsA={statsA} statsB={statsB} type={compareType} />
+          </div>
         )}
       </div>
+
+      {}
+      {isSearchOpen && (
+        <SearchModal
+          isOpen={!!isSearchOpen}
+          onClose={() => setIsSearchOpen(null)}
+          type={compareType}
+          list={compareType === "players" ? allPlayers : allTeams}
+          onSelect={handleSelect}
+          allTeams={allTeams}
+        />
+      )}
     </div>
   );
 };
 
-interface HistoryOption {
-  season?: number;
-  leagueId?: string;
-  label: string;
-}
-
-interface ComparisonCardProps {
-  type: "players" | "teams";
-  data: any;
-  onSelect: (data: any) => void;
-  list: any[];
-  label: string;
-  allTeams: Team[];
-  leagues: League[];
-  maxSeason: number;
-  onStatsUpdate: (stats: any) => void;
-}
-
-const ComparisonCard = ({
+const EntityCard = ({
+  side,
   type,
-  data,
-  onSelect,
-  list,
-  label,
-  allTeams,
+  entity,
+  onRemove,
+  onAdd,
   leagues,
+  allTeams,
   maxSeason,
   onStatsUpdate,
-}: ComparisonCardProps) => {
-  const [historyOptions, setHistoryOptions] = useState<HistoryOption[]>([]);
-  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState<number>(-1);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredList = useMemo(() => {
-    if (!searchTerm) return list;
-    return list.filter((item) => {
-      const nameMatch = item.name
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase());
-      if (nameMatch) return true;
-
-      if (type === "players") {
-        const teamId =
-          typeof item.teamId === "string" ? item.teamId : item.teamId?._id;
-        const team = allTeams.find((t: any) => t._id === teamId);
-        if (team && team.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          return true;
-      }
-      return false;
-    });
-  }, [list, searchTerm, type, allTeams]);
+  stats,
+  isCompact = false
+}: any) => {
+  const [historyOptions, setHistoryOptions] = useState<any[]>([]);
+  const [selectedHistoryIndex, setSelectedHistoryIndex] = useState(0);
 
   useEffect(() => {
-    if (!data) {
+    if (!entity) {
       setHistoryOptions([]);
-      setSelectedHistoryIndex(-1);
       onStatsUpdate(null);
       return;
     }
 
     let team: Team | undefined;
     if (type === "teams") {
-      team = data as Team;
+      team = entity as Team;
     } else {
-      const teamId =
-        typeof data.teamId === "string" ? data.teamId : data.teamId?._id;
-      team = allTeams.find((t) => t._id === teamId);
+      const teamId = typeof entity.teamId === "string" ? entity.teamId : entity.teamId?._id;
+      team = allTeams.find((t: any) => t._id === teamId);
     }
 
     if (team) {
-      const options: HistoryOption[] = [];
+      const options: any[] = [];
 
       options.push({
-        label: "All Career (All Seasons & Competitions)",
+        label: "All Time",
         season: undefined,
         leagueId: undefined,
       });
 
-      let domesticLeague: League | undefined;
-
-      if (team.country) {
-        domesticLeague = leagues.find(
-          (l) =>
-            l.country === team?.country &&
-            l.name !== "Champions League" &&
-            l.name !== "Europe",
-        );
-      }
-
-      if (!domesticLeague) {
-        const leagueId =
-          typeof team.leagueId === "string"
-            ? team.leagueId
-            : (team.leagueId as any)?._id;
-        const l = leagues.find((l) => l._id === leagueId);
-        if (l && l.name !== "Champions League" && l.name !== "Europe") {
-          domesticLeague = l;
-        }
-      }
-
-      const domesticName = domesticLeague
-        ? domesticLeague.name
-        : team.country + " League";
-
-      const clLeague = leagues.find(
-        (l) => l.name === "Champions League" || l.name === "Europe",
+      let domesticLeague = leagues.find(
+        (l: any) => l.country === team?.country && !["Champions League", "Europe"].includes(l.name)
       );
 
-      for (let s = 1; s <= maxSeason; s++) {
+      if (!domesticLeague) {
+        const leagueId = typeof team.leagueId === "string" ? team.leagueId : (team.leagueId as any)?._id;
+        domesticLeague = leagues.find((l: any) => l._id === leagueId);
+      }
+
+      const domesticName = domesticLeague ? domesticLeague.name : (team.country + " League");
+      const clLeague = leagues.find((l: any) => ["Champions League", "Europe"].includes(l.name));
+
+      for (let s = maxSeason; s >= 1; s--) {
         if (domesticLeague) {
           options.push({
             season: s,
             leagueId: domesticLeague._id,
-            label: `${domesticName} - Season ${s}`,
+            label: `${domesticName} ${s}`,
           });
         }
-
-        if (
-          clLeague &&
-          (team.clGroup || (team.clStats && (team.clStats.matches || 0) > 0))
-        ) {
+        if (clLeague && (team.clGroup || (team.clStats?.matches || 0) > 0)) {
           options.push({
             season: s,
             leagueId: clLeague._id,
-            label: `Champions League - Season ${s}`,
+            label: `UCL ${s}`,
           });
         }
       }
-
       setHistoryOptions(options);
-
       setSelectedHistoryIndex(0);
     }
-  }, [data, type, allTeams, leagues, maxSeason]);
+  }, [entity, type, allTeams, leagues, maxSeason]);
 
   useEffect(() => {
     const fetchStats = async () => {
-      if (
-        !data ||
-        selectedHistoryIndex === -1 ||
-        !historyOptions[selectedHistoryIndex]
-      )
-        return;
+      if (!entity || !historyOptions[selectedHistoryIndex]) return;
 
       const { season, leagueId } = historyOptions[selectedHistoryIndex];
-
       try {
-        let statsData;
-        if (type === "players") {
-          statsData = await FootballAPI.getPlayerStats(
-            data._id,
-            season as number,
-            leagueId as string,
-          );
-        } else {
-          statsData = await FootballAPI.getTeamStats(
-            data._id,
-            season as number,
-            leagueId as string,
-          );
-        }
+        const statsData = type === "players"
+          ? await FootballAPI.getPlayerStats(entity._id, season, leagueId)
+          : await FootballAPI.getTeamStats(entity._id, season, leagueId);
         onStatsUpdate(statsData);
-      } catch (error) {
-        console.error("Failed to fetch stats", error);
+      } catch (err) {
+        console.error(err);
         onStatsUpdate(null);
       }
     };
     fetchStats();
-  }, [data, selectedHistoryIndex, historyOptions, type]);
+  }, [entity, selectedHistoryIndex, historyOptions]);
+
+  if (!entity) {
+    return (
+      <div
+        onClick={onAdd}
+        className={`${styles.cardEmpty} ${isCompact ? styles.cardEmptyCompact : styles.cardEmptyNormal}`}
+      >
+        <div className={`${styles.plusIcon} ${isCompact ? styles.plusIconCompact : styles.plusIconNormal}`}>
+          +
+        </div>
+        <p className={styles.emptyText}>
+          Select {type === "players" ? "Player" : "Team"} {side}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex flex-col items-center min-h-[400px]">
-      <h3 className="text-slate-400 font-bold uppercase text-sm mb-4">
-        {label}
-      </h3>
+    <div className={`${styles.cardFilled} ${isCompact ? styles.cardFilledCompact : ''}`}>
+      <button
+        onClick={onRemove}
+        className={styles.removeButton}
+      >
+        ✕
+      </button>
 
       {}
-      <div className="w-full mb-6">
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            placeholder={`Search ${type}...`}
-            className="flex-1 bg-slate-800 p-3 rounded-lg border border-slate-700 text-sm outline-none focus:border-lab-accent"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+      <div className={`${styles.cardHeader} ${isCompact ? styles.paddingCompact : styles.paddingNormal}`}>
+        <div className={`${styles.avatar} ${isCompact ? styles.avatarCompact : styles.avatarNormal}`}>
+          {type === "players" ? "👤" : "🛡️"}
         </div>
+        <h2 className={`${styles.entityName} ${isCompact ? styles.textLg : styles.textXl}`}>{entity.name}</h2>
+        <p className={styles.entityMeta}>
+           {type === "players" ? entity.position : entity.country}
+           {type === "players" && entity.teamId && (
+              <span className="opacity-75"> • {
 
-        <select
-          className="w-full bg-slate-800 p-3 rounded-lg border border-slate-700 text-lg font-semibold outline-none focus:border-lab-accent"
-          onChange={(e) => {
-            const selected = list.find(
-              (item: any) => item._id === e.target.value,
-            );
-            onSelect(selected);
-            setSearchTerm("");
-          }}
-          value={data ? data._id : ""}
-          size={searchTerm ? 5 : 1}
-        >
-          <option value="">
-            Select {type === "players" ? "Player" : "Team"}
-          </option>
-          {filteredList.map((item: any) => {
-            let displayName = item.name;
-            if (type === "players") {
-              const teamId =
-                typeof item.teamId === "string"
-                  ? item.teamId
-                  : item.teamId?._id;
-              const team = allTeams.find((t: any) => t._id === teamId);
-              if (team) displayName += ` - ${item.position} - ${team.name}`;
-            }
-            return (
-              <option key={item._id} value={item._id}>
-                {displayName}
-              </option>
-            );
-          })}
-        </select>
+                   typeof entity.teamId === 'object' ? (entity.teamId as any).name : 'Team'
+              }</span>
+           )}
+        </p>
+
+        {}
+        <div className="w-full max-w-[200px]">
+          <select
+            value={selectedHistoryIndex}
+            onChange={(e) => setSelectedHistoryIndex(Number(e.target.value))}
+            className={styles.contextSelect}
+          >
+            {historyOptions.map((opt, idx) => (
+              <option key={idx} value={idx}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {data && (
-        <div className="w-full animate-fade-in flex flex-col items-center">
-          {}
-          <div className="w-full mb-6">
-            <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">
-              Context
-            </label>
-            <select
-              value={selectedHistoryIndex}
-              onChange={(e) => setSelectedHistoryIndex(Number(e.target.value))}
-              className="w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 outline-none focus:border-lab-accent font-bold text-lab-accent"
-              disabled={historyOptions.length === 0}
-            >
-              {historyOptions.map((opt, idx) => (
-                <option key={idx} value={idx}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex items-center gap-4 mb-4 bg-slate-800/50 p-4 rounded-xl w-full justify-center">
-            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-2xl shadow-lg border-2 border-slate-700">
-              {type === "players" ? "👤" : "🛡️"}
-            </div>
-            <div className="text-left">
-              <h2 className="text-xl font-bold text-white leading-tight">
-                {data.name}
-              </h2>
-              <p className="text-slate-400 text-sm">
-                {type === "players" ? data.position : data.country}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!data && (
-        <div className="h-40 flex items-center justify-center text-slate-600 italic">
-          Select an entity to start comparison
-        </div>
-      )}
+      {}
+      <div className={`${styles.statsArea} ${isCompact ? styles.paddingCompact : styles.paddingNormal}`}>
+        {!stats ? (
+           <div className="animate-pulse text-slate-600 text-sm">Loading stats...</div>
+        ) : (
+           <div className={styles.statsGrid}>
+              <div className={styles.statBox}>
+                 <div className={`${styles.statValue} ${isCompact ? styles.textXl : styles.text2Xl} ${styles.textEmerald}`}>{stats.matches || 0}</div>
+                 <div className={styles.statLabel}>Matches</div>
+              </div>
+              <div className={styles.statBox}>
+                 <div className={`${styles.statValue} ${isCompact ? styles.textXl : styles.text2Xl} ${styles.textBlue}`}>{
+                    type === 'players' ? (stats.goals || 0) : (stats.points || 0)
+                 }</div>
+                 <div className={styles.statLabel}>
+                    {type === 'players' ? 'Goals' : 'Points'}
+                 </div>
+              </div>
+           </div>
+        )}
+      </div>
     </div>
   );
 };
 
-const StatsTable = ({ statsA, statsB, type }: any) => {
-  const statsToCompare =
-    type === "players"
-      ? [
-          { key: "matches", label: "Matches" },
-          { key: "goals", label: "Goals" },
-          { key: "assists", label: "Assists" },
-          { key: "yellowCards", label: "Yellow Cards" },
-          { key: "redCards", label: "Red Cards" },
-          { key: "cleanSheets", label: "Clean Sheets" },
-          { key: "tackles", label: "Tackles" },
-          { key: "interceptions", label: "Interceptions" },
-          { key: "keyPasses", label: "Key Passes" },
-          { key: "saves", label: "Saves" },
-          { key: "distanceCovered", label: "Distance (km)" },
-        ]
-      : [
-          { key: "matches", label: "Matches" },
-          { key: "points", label: "Points" },
-          { key: "wins", label: "Wins" },
-          { key: "draws", label: "Draws" },
-          { key: "losses", label: "Losses" },
-          { key: "goalsFor", label: "Goals For" },
-          { key: "goalsAgainst", label: "Goals Against" },
-        ];
+const ComparisonStats = ({ statsA, statsB, type }: any) => {
+  const statsConfig = type === "players"
+    ? [
+        { key: "goals", label: "Goals" },
+        { key: "assists", label: "Assists" },
+        { key: "keyPasses", label: "Key Passes" },
+        { key: "tackles", label: "Tackles" },
+        { key: "interceptions", label: "Interceptions" },
+        { key: "cleanSheets", label: "Clean Sheets" },
+        { key: "yellowCards", label: "Yellow Cards", invert: true },
+        { key: "distanceCovered", label: "Distance (km)" },
+      ]
+    : [
+        { key: "points", label: "Points" },
+        { key: "wins", label: "Wins" },
+        { key: "draws", label: "Draws" },
+        { key: "losses", label: "Losses", invert: true },
+        { key: "goalsFor", label: "Goals For" },
+        { key: "goalsAgainst", label: "Goals Against", invert: true },
+      ];
 
   return (
-    <div className="mt-12 bg-slate-900/80 p-8 rounded-2xl border border-slate-800">
-      <h3 className="text-center text-xl font-bold mb-8 text-slate-300">
-        Statistical Comparison
+    <div className={styles.detailedStatsBox}>
+      <h3 className={styles.breakdownTitle}>
+        Detailed Breakdown
       </h3>
-      <div className="space-y-6 max-w-3xl mx-auto">
-        {statsToCompare.map((stat) => {
+      <div className="space-y-8">
+        {statsConfig.map((stat) => {
           const valA = statsA[stat.key] || 0;
           const valB = statsB[stat.key] || 0;
-          const total = valA + valB;
-          const percentA = total === 0 ? 50 : (valA / total) * 100;
-          const percentB = total === 0 ? 50 : (valB / total) * 100;
+          const max = Math.max(valA, valB, 1);
+
+          const widthA = (valA / max) * 100;
+          const widthB = (valB / max) * 100;
 
           return (
-            <div key={stat.key} className="flex flex-col">
-              <div className="flex justify-between text-sm text-slate-400 mb-1 px-1">
-                <span>{valA}</span>
-                <span className="font-bold text-white">{stat.label}</span>
-                <span>{valB}</span>
-              </div>
-              <div className="flex h-3 bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className={`transition-all duration-500 ${valA > valB ? "bg-lab-accent" : "bg-slate-600"}`}
-                  style={{ width: `${percentA}%` }}
-                />
-                <div className="w-0.5 bg-slate-900"></div>
-                <div
-                  className={`transition-all duration-500 ${valB > valA ? "bg-blue-500" : "bg-slate-600"}`}
-                  style={{ width: `${percentB}%` }}
-                />
-              </div>
+            <div key={stat.key} className="group">
+               {}
+               <div className={styles.statRowLabel}>
+                  <span className={`text-lg font-bold ${valA > valB ? styles.textEmerald : styles.textSlate400}`}>
+                    {valA}
+                  </span>
+                  <span className={`text-sm font-medium uppercase pb-1 ${styles.textSlate500}`}>{stat.label}</span>
+                  <span className={`text-lg font-bold ${valB > valA ? styles.textBlue : styles.textSlate400}`}>
+                    {valB}
+                  </span>
+               </div>
+
+               {}
+               <div className={styles.statRowBar}>
+                  <div className={styles.barContainer} style={{ justifyContent: 'flex-end' }}>
+                     <div
+                        className={`${styles.barFill} ${valA > valB ? styles.bgEmerald : styles.bgSlate}`}
+                        style={{ width: `${widthA}%` }}
+                     />
+                  </div>
+
+                  <div className="w-1 h-full bg-slate-800 rounded-full shrink-0" />
+
+                  <div className={styles.barContainer} style={{ justifyContent: 'flex-start' }}>
+                     <div
+                        className={`${styles.barFill} ${valB > valA ? styles.bgBlue : styles.bgSlate}`}
+                        style={{ width: `${widthB}%` }}
+                     />
+                  </div>
+               </div>
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+};
+
+const SearchModal = ({ isOpen, onClose, type, list, onSelect, allTeams }: any) => {
+  const [term, setTerm] = useState("");
+
+  const filtered = useMemo(() => {
+    if (!term) return list.slice(0, 20);
+    const lower = term.toLowerCase();
+    return list.filter((item: any) => {
+        if (item.name.toLowerCase().includes(lower)) return true;
+        if (type === "players") {
+            const teamId = typeof item.teamId === "string" ? item.teamId : item.teamId?._id;
+            const team = allTeams.find((t: any) => t._id === teamId);
+            if (team && team.name.toLowerCase().includes(lower)) return true;
+        }
+        return false;
+    }).slice(0, 50);
+  }, [list, term, type, allTeams]);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <div className={styles.modalOverlay}>
+      {}
+      <div className={styles.modalBackdrop} onClick={onClose} />
+
+      {}
+      <div className={styles.modalContent}>
+        <div className="p-4 border-b border-slate-800">
+            <input
+              autoFocus
+              type="text"
+              placeholder={`Search ${type}...`}
+              className={styles.searchInput}
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+            />
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-2 space-y-1">
+            {filtered.length === 0 && (
+                <div className="text-center py-8 text-slate-500">No results found</div>
+            )}
+            {filtered.map((item: any) => {
+                const teamId = typeof item.teamId === "string" ? item.teamId : item.teamId?._id;
+                const team = type === "players" ? allTeams.find((t: any) => t._id === teamId) : null;
+
+                return (
+                    <button
+                        key={item._id}
+                        onClick={() => onSelect(item)}
+                        className={styles.resultItem}
+                    >
+                        <div className={styles.resultAvatar}>
+                            {type === "players" ? "👤" : "🛡️"}
+                        </div>
+                        <div>
+                            <div className="font-bold text-slate-200 group-hover:text-white">{item.name}</div>
+                            <div className="text-xs text-slate-500">
+                                {type === "players"
+                                    ? `${item.position} • ${team?.name || 'Unknown Team'}`
+                                    : item.country
+                                }
+                            </div>
+                        </div>
+                    </button>
+                );
+            })}
+        </div>
       </div>
     </div>
   );

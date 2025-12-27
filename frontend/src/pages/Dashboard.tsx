@@ -24,8 +24,9 @@ const emptyStats = (): TeamStats => ({
 
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { leagues, allTeams, allMatches, loading } = useData();
+  const { leagues, allTeams, allMatches, loading, refreshData } = useData();
 
+  const [isSimulating, setIsSimulating] = useState(false);
   const selectedLeague = searchParams.get("league");
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [availableSeasons, setAvailableSeasons] = useState<number[]>([1]);
@@ -262,6 +263,27 @@ export function Dashboard() {
           <Link to="/compare" className={styles.compareLink}>
             ⚖️ Compare Head-to-Head
           </Link>
+          <button
+            onClick={async () => {
+                if (isSimulating) return;
+                setIsSimulating(true);
+                try {
+                    console.log("Running simulation step...");
+                    await FootballAPI.runSimulation();
+                    await refreshData();
+                } catch(e) {
+                    console.error(e);
+                    alert("Failed to run simulation");
+                } finally {
+                    setIsSimulating(false);
+                }
+            }}
+            className={`${styles.runSimButton} ${isSimulating ? styles.disabled : ''}`}
+            title="Run Simulation Manually"
+            disabled={isSimulating}
+          >
+            {isSimulating ? "⏳" : "▶"}
+          </button>
         </div>
         <div className={styles.controls}>
           <div className={styles.seasonSelector}>
