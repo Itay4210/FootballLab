@@ -2,7 +2,7 @@
 
 FootbalLab is a comprehensive football simulation and management platform. It allows users to simulate football seasons, track league standings, manage teams and players, and experience the evolution of a football world over time.
 
-![League Table](docs/screenshots/league-table.png)
+![League Table](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%282%29.png)
 *Live League Standings across multiple European leagues*
 
 ## 🚀 Features
@@ -18,7 +18,7 @@ FootbalLab is a comprehensive football simulation and management platform. It al
 
 | Player Comparison | Season Stats |
 |:-----------------:|:------------:|
-| ![Comparison](docs/screenshots/comparison.png) | ![Stats](docs/screenshots/stats.png) |
+| ![Comparison](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%283%29.png) | ![Stats](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%284%29.png) |
 | *Compare players head-to-head* | *Detailed season statistics* |
 
 ## 🛠️ Tech Stack
