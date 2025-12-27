@@ -262,7 +262,7 @@ export function Dashboard() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>FootbalLab 🧪</h1>
+          <h1 className={styles.title}>FootballLab 🧪</h1>
           <p className={styles.subtitle}>Season 2025/26 Simulation</p>
           <Link to="/compare" className={styles.compareLink}>
             ⚖️ Compare Head-to-Head
