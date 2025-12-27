@@ -41,7 +41,7 @@ export const ComparisonPage = () => {
         );
         setMaxSeason(maxS);
       } catch (error) {
-        console.error("Failed to load data", error);
+
       }
     };
     initData();
@@ -244,7 +244,7 @@ const EntityCard = ({
           : await FootballAPI.getTeamStats(entity._id, season, leagueId);
         onStatsUpdate(statsData);
       } catch (err) {
-        console.error(err);
+
         onStatsUpdate(null);
       }
     };

@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Get } from '@nestjs/common';
 import { SimulationService } from './simulation.service';
 @Controller('simulation')
 export class SimulationController {
@@ -10,5 +10,9 @@ export class SimulationController {
   @Post('reset')
   reset() {
     return this.simulationService.resetData();
+  }
+  @Get('summary')
+  getSummary() {
+    return this.simulationService.getLatestSummary();
   }
 }
