@@ -51,7 +51,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({
       setAllPlayers(playersData);
       setError(null);
     } catch (err) {
-      console.error("Failed to fetch data", err);
+
       setError(err);
     } finally {
       setLoading(false);

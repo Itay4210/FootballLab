@@ -6,9 +6,11 @@ import {
   type TeamStats,
   type Player,
   type Match,
+  type SeasonSummary,
 } from "../services/api";
 import { LeagueTable } from "../components/LeagueTable";
 import { TopPlayers } from "../components/TopPlayers";
+import { SummerSummaryModal } from "../components/SummerSummaryModal";
 import { useData } from "../context/DataContext";
 import styles from "./Dashboard.module.css";
 
@@ -32,6 +34,8 @@ export function Dashboard() {
   const [availableSeasons, setAvailableSeasons] = useState<number[]>([1]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [showSummary, setShowSummary] = useState(false);
+  const [summaryData, setSummaryData] = useState<SeasonSummary | null>(null);
 
   const [topScorers, setTopScorers] = useState<Player[]>([]);
   const [topAssisters, setTopAssisters] = useState<Player[]>([]);
@@ -241,7 +245,7 @@ export function Dashboard() {
           setTopInterceptions(interceptions);
           setTopDistance(distance);
         } catch (err) {
-          console.error("Failed to fetch top players", err);
+
         }
       }
     };
@@ -265,14 +269,33 @@ export function Dashboard() {
           </Link>
           <button
             onClick={async () => {
+                const data = await FootballAPI.getSeasonSummary();
+                setSummaryData(data);
+                setShowSummary(true);
+            }}
+            style={{
+                marginLeft: '10px',
+                padding: '8px 16px',
+                backgroundColor: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+            }}
+          >
+            ☀️ Summer Report
+          </button>
+          <button
+            onClick={async () => {
                 if (isSimulating) return;
                 setIsSimulating(true);
                 try {
-                    console.log("Running simulation step...");
+
                     await FootballAPI.runSimulation();
                     await refreshData();
                 } catch(e) {
-                    console.error(e);
+
                     alert("Failed to run simulation");
                 } finally {
                     setIsSimulating(false);
@@ -390,6 +413,11 @@ export function Dashboard() {
           </div>
         )}
       </main>
+      <SummerSummaryModal
+        isOpen={showSummary}
+        summary={summaryData}
+        onClose={() => setShowSummary(false)}
+      />
     </div>
   );
 }

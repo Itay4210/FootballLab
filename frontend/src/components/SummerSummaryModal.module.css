@@ -1,0 +1,352 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 900px;
+  height: 85vh; /* Fixed height to allow scrolling content */
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+.header {
+  padding: 20px 24px;
+  background-color: #252525;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  background-color: #252525;
+  padding: 0 24px;
+  border-bottom: 1px solid #333;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.tab {
+  background: none;
+  border: none;
+  color: #888;
+  padding: 16px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s;
+}
+
+.tab:hover {
+  color: #ccc;
+}
+
+.activeTab {
+  color: #fff;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #3b82f6;
+  box-shadow: 0 -2px 8px rgba(59, 130, 246, 0.5);
+}
+
+.content {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+}
+
+.sectionTitle {
+  margin: 0 0 16px 0;
+  font-size: 1.2rem;
+  color: #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Most Improved Player */
+.heroSection {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.highlightCard {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.highlightAvatar {
+  font-size: 4rem;
+  background-color: #334155;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(51, 65, 85, 0.5);
+}
+
+.highlightInfo h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.8rem;
+  color: #fff;
+}
+
+.highlightTeam {
+  color: #94a3b8;
+  font-size: 1.1rem;
+  margin: 0;
+  display: block;
+}
+
+.statChangeBig {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 16px 32px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.statValueBig {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #94a3b8;
+}
+
+.statArrowBig {
+  color: #4ade80;
+  font-size: 1.5rem;
+}
+
+.statNewBig {
+  color: #4ade80;
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
+}
+
+/* Transfers List */
+.transfersList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.transferItem {
+  display: grid;
+  grid-template-columns: 2fr 2fr 40px 2fr 1.5fr;
+  align-items: center;
+  background-color: #252525;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  transition: background-color 0.2s;
+}
+
+.transferItem:hover {
+  background-color: #2a2a2a;
+}
+
+.playerName {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1.1rem;
+}
+
+.teamName {
+  color: #9ca3af;
+  font-size: 1rem;
+  text-align: center;
+}
+
+.transferArrow {
+  color: #4b5563;
+  text-align: center;
+  font-size: 1.2rem;
+}
+
+.transferFee {
+  color: #fbbf24;
+  font-weight: bold;
+  text-align: right;
+  font-family: monospace;
+  font-size: 1.2rem;
+}
+
+/* Retirements Grid */
+.retirementsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.retirementCard {
+  background-color: #252525;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.retirementCard:hover {
+  transform: translateY(-4px);
+  background-color: #2a2a2a;
+}
+
+.retireeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+
+.retireeName {
+  display: block;
+  font-weight: 700;
+  color: #e5e7eb;
+  font-size: 1.1rem;
+}
+
+.retireeAge {
+  background-color: #333;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.retireeTeam {
+  display: block;
+  font-size: 0.9rem;
+  color: #9ca3af;
+}
+
+.retireeStrength {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .transferItem {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    text-align: center;
+    padding: 16px;
+  }
+  
+  .transferArrow {
+    transform: rotate(90deg);
+    margin: 4px 0;
+  }
+  
+  .transferFee {
+    text-align: center;
+    margin-top: 8px;
+  }
+
+  .tabs {
+    padding: 0 16px;
+    gap: 16px;
+    overflow-x: auto;
+  }
+  
+  .tab {
+    white-space: nowrap;
+  }
+}
