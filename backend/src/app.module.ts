@@ -14,12 +14,17 @@ import { ScheduleModule } from '@nestjs/schedule';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: '.env',
     }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGODB_URI'),
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const uri = configService.get<string>('MONGODB_URI') || 'mongodb://127.0.0.1:27017/footballlab';
+
+        return {
+          uri,
+        };
+      },
       inject: [ConfigService],
     }),
     ScheduleModule.forRoot(),
