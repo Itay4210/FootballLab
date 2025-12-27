@@ -281,6 +281,11 @@
   text-align: center;
 }
 
+.thMainPoints {
+  padding: 1rem 1.5rem;
+  text-align: center;
+}
+
 .trMain {
   border-top: 1px solid #1e293b;
   transition: background-color 0.15s;

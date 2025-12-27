@@ -135,4 +135,8 @@ export const FootballAPI = {
     });
     return response.data;
   },
+  runSimulation: async () => {
+    const response = await api.post("/simulation/run");
+    return response.data;
+  },
 };

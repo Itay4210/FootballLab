@@ -1,13 +1,32 @@
 @import "tailwindcss";
+
 @theme {
   --color-lab-dark: #0f172a;
   --color-lab-card: #1e293b;
   --color-lab-accent: #10b981;
   --color-lab-text: #e2e8f0;
+
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
+
 body {
   @apply bg-lab-dark text-lab-text;
   margin: 0;
   font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
 }

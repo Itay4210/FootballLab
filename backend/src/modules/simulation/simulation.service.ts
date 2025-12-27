@@ -101,9 +101,9 @@ export class SimulationService {
           })
           .exec();
         if (matchesToPlay.length > 0) {
-          for (const match of matchesToPlay) {
-            await this.simulateSingleMatch(match, isCL);
-          }
+          await Promise.all(
+            matchesToPlay.map((match) => this.simulateSingleMatch(match, isCL)),
+          );
           await this.leagueModel.findByIdAndUpdate(league._id, {
             $inc: { currentMatchday: 1 },
           });
@@ -409,111 +409,126 @@ export class SimulationService {
     const homeLineup = this.selectMatchSquad(homePlayers);
     const awayLineup = this.selectMatchSquad(awayPlayers);
 
-    for (const p of homeLineup.starters) {
-      await this.updatePlayerStats(
-        p._id,
-        this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
-      );
-    }
-    for (const p of awayLineup.starters) {
-      await this.updatePlayerStats(
-        p._id,
-        this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
-      );
-    }
+    await Promise.all(
+      homeLineup.starters.map((p) =>
+        this.updatePlayerStats(
+          p._id,
+          this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
+        ),
+      ),
+    );
+    await Promise.all(
+      awayLineup.starters.map((p) =>
+        this.updatePlayerStats(
+          p._id,
+          this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
+        ),
+      ),
+    );
 
     const homeSubs = this.pickSubstitutes(homeLineup.subs);
     const awaySubs = this.pickSubstitutes(awayLineup.subs);
 
-    for (const p of homeSubs) {
-      await this.updatePlayerStats(
-        p._id,
-        this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
-      );
-    }
-    for (const p of awaySubs) {
-      await this.updatePlayerStats(
-        p._id,
-        this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
-      );
-    }
+    await Promise.all(
+      homeSubs.map((p) =>
+        this.updatePlayerStats(
+          p._id,
+          this.generatePlayerMatchStats(p.position, aG === 0, hG, aG),
+        ),
+      ),
+    );
+    await Promise.all(
+      awaySubs.map((p) =>
+        this.updatePlayerStats(
+          p._id,
+          this.generatePlayerMatchStats(p.position, hG === 0, aG, hG),
+        ),
+      ),
+    );
 
     const homeActivePlayers = [...homeLineup.starters, ...homeSubs];
     const awayActivePlayers = [...awayLineup.starters, ...awaySubs];
 
     const events: MatchEvent[] = [];
 
-    for (let i = 0; i < hG; i++) {
-      const s = this.pickScorerFromList(homeActivePlayers);
-      if (s) {
-        const minute = Math.floor(Math.random() * 90) + 1;
-        events.push({
-          minute,
-          type: 'goal',
-          playerId: s._id,
-          description: 'Goal',
-        });
-        await this.updatePlayerStats(s._id, { goals: 1 });
+    await Promise.all(
+      Array.from({ length: hG }).map(async () => {
+        const s = this.pickScorerFromList(homeActivePlayers);
+        if (s) {
+          const minute = Math.floor(Math.random() * 90) + 1;
+          events.push({
+            minute,
+            type: 'goal',
+            playerId: s._id,
+            description: 'Goal',
+          });
+          await this.updatePlayerStats(s._id, { goals: 1 });
 
-        if (Math.random() < 0.7) {
-          const a = this.pickAssisterFromList(homeActivePlayers, s._id);
-          if (a) {
-            events.push({
-              minute,
-              type: 'assist',
-              playerId: a._id,
-              description: 'Assist',
-            });
-            await this.updatePlayerStats(a._id, { assists: 1 });
+          if (Math.random() < 0.7) {
+            const a = this.pickAssisterFromList(homeActivePlayers, s._id);
+            if (a) {
+              events.push({
+                minute,
+                type: 'assist',
+                playerId: a._id,
+                description: 'Assist',
+              });
+              await this.updatePlayerStats(a._id, { assists: 1 });
+            }
           }
         }
-      }
-    }
-    for (let i = 0; i < aG; i++) {
-      const s = this.pickScorerFromList(awayActivePlayers);
-      if (s) {
-        const minute = Math.floor(Math.random() * 90) + 1;
-        events.push({
-          minute,
-          type: 'goal',
-          playerId: s._id,
-          description: 'Goal',
-        });
-        await this.updatePlayerStats(s._id, { goals: 1 });
+      }),
+    );
+    await Promise.all(
+      Array.from({ length: aG }).map(async () => {
+        const s = this.pickScorerFromList(awayActivePlayers);
+        if (s) {
+          const minute = Math.floor(Math.random() * 90) + 1;
+          events.push({
+            minute,
+            type: 'goal',
+            playerId: s._id,
+            description: 'Goal',
+          });
+          await this.updatePlayerStats(s._id, { goals: 1 });
 
-        if (Math.random() < 0.7) {
-          const a = this.pickAssisterFromList(awayActivePlayers, s._id);
-          if (a) {
-            events.push({
-              minute,
-              type: 'assist',
-              playerId: a._id,
-              description: 'Assist',
-            });
-            await this.updatePlayerStats(a._id, { assists: 1 });
+          if (Math.random() < 0.7) {
+            const a = this.pickAssisterFromList(awayActivePlayers, s._id);
+            if (a) {
+              events.push({
+                minute,
+                type: 'assist',
+                playerId: a._id,
+                description: 'Assist',
+              });
+              await this.updatePlayerStats(a._id, { assists: 1 });
+            }
           }
         }
-      }
-    }
+      }),
+    );
 
     const totalCards = Math.floor(Math.random() * 4) + 1;
     const allActive = [...homeActivePlayers, ...awayActivePlayers];
-    for (let i = 0; i < totalCards; i++) {
-      const p = allActive[Math.floor(Math.random() * allActive.length)];
-      if (!p) continue;
-      const isRed = Math.random() < 0.05;
-      const minute = Math.floor(Math.random() * 90) + 1;
-      events.push({
-        minute,
-        type: isRed ? 'redCard' : 'yellowCard',
-        playerId: p._id,
-        description: isRed ? 'Red Card' : 'Yellow Card',
-      });
-      await this.updatePlayerStats(p._id, {
-        yellowCards: isRed ? 0 : 1,
-        redCards: isRed ? 1 : 0,
-      });
-    }
+    await Promise.all(
+      Array.from({ length: totalCards }).map(async () => {
+        const p = allActive[Math.floor(Math.random() * allActive.length)];
+        if (p) {
+          const isRed = Math.random() < 0.05;
+          const minute = Math.floor(Math.random() * 90) + 1;
+          events.push({
+            minute,
+            type: isRed ? 'redCard' : 'yellowCard',
+            playerId: p._id,
+            description: isRed ? 'Red Card' : 'Yellow Card',
+          });
+          await this.updatePlayerStats(p._id, {
+            yellowCards: isRed ? 0 : 1,
+            redCards: isRed ? 1 : 0,
+          });
+        }
+      }),
+    );
 
     await this.updateTeamStats(homeTeam, hG, aG, isCL);
     await this.updateTeamStats(awayTeam, aG, hG, isCL);
