@@ -7,6 +7,17 @@ export class TeamsController {
   getAllTeams() {
     return this.teamsService.findAll();
   }
+
+  @Get('search')
+  search(@Query('q') q: string) {
+    return this.teamsService.search(q);
+  }
+
+  @Get(':id')
+  getTeamById(@Param('id') id: string) {
+    return this.teamsService.findById(id);
+  }
+
   @Get('league/:leagueId/table')
   getLeagueTable(@Param('leagueId') leagueId: string) {
     return this.teamsService.getTable(leagueId);

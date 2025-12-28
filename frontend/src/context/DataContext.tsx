@@ -3,23 +3,17 @@ import React, {
   useContext,
   useState,
   useEffect,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import {
   FootballAPI,
   type League,
-  type Team,
-  type Match,
-  type Player,
 } from "../services/api";
 
 interface DataContextType {
   leagues: League[];
-  allTeams: Team[];
-  allMatches: Match[];
-  allPlayers: Player[];
   loading: boolean;
-  error: any;
+  error: Error | null;
   refreshData: () => Promise<void>;
 }
 
@@ -29,30 +23,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [leagues, setLeagues] = useState<League[]>([]);
-  const [allTeams, setAllTeams] = useState<Team[]>([]);
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
-  const [allPlayers, setAllPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [leaguesData, teamsData, matchesData, playersData] =
-        await Promise.all([
-          FootballAPI.getLeagues(),
-          FootballAPI.getAllTeams(),
-          FootballAPI.getMatches(),
-          FootballAPI.getPlayers(),
-        ]);
+      // Only fetch leagues list initially, not everything
+      const leaguesData = await FootballAPI.getLeagues();
       setLeagues(leaguesData);
-      setAllTeams(teamsData);
-      setAllMatches(matchesData);
-      setAllPlayers(playersData);
       setError(null);
     } catch (err) {
-
-      setError(err);
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
     } finally {
       setLoading(false);
     }
@@ -66,9 +48,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({
     <DataContext.Provider
       value={{
         leagues,
-        allTeams,
-        allMatches,
-        allPlayers,
         loading,
         error,
         refreshData: fetchData,

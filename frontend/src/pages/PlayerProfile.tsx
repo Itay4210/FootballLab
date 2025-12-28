@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import {
   FootballAPI,
   type Player,
-  type Match,
   type Team,
 } from "../services/api";
 
@@ -27,73 +26,24 @@ export const PlayerProfile = () => {
 
     const fetchData = async () => {
       try {
-        const [players, matches, teams] = await Promise.all([
-          FootballAPI.getPlayers(),
-          FootballAPI.getMatches(),
-          FootballAPI.getTeams(),
-        ]);
+        const p = await FootballAPI.getPlayer(playerId);
+        setPlayer(p);
 
-        const p = players.find((x) => x._id === playerId);
-        setPlayer(p || null);
-
-        if (p) {
-          const tId = typeof p.teamId === "string" ? p.teamId : p.teamId._id;
-          const t = teams.find((x) => x._id === tId);
-          setTeam(t || null);
+        if (p && p.teamId) {
+            const tId = typeof p.teamId === "string" ? p.teamId : p.teamId._id;
+            try {
+                const t = await FootballAPI.getTeam(tId);
+                setTeam(t);
+            } catch {
+                // Ignore team fetch error
+            }
         }
 
-        const history = new Map<
-          number,
-          {
-            goals: number;
-            assists: number;
-            yellowCards: number;
-            redCards: number;
-            matches: number;
-          }
-        >();
+        const history = await FootballAPI.getPlayerHistory(playerId);
+        setStatsHistory(history);
 
-        matches.forEach((m) => {
-          if (m.status !== "finished") return;
-          const season = m.seasonNumber || 1;
-          if (!history.has(season)) {
-            history.set(season, {
-              goals: 0,
-              assists: 0,
-              yellowCards: 0,
-              redCards: 0,
-              matches: 0,
-            });
-          }
-          const s = history.get(season)!;
-
-          const playerEvents =
-            m.events?.filter((e) => e.playerId === playerId) || [];
-
-          if (playerEvents.length > 0) {
-            s.matches++;
-          }
-
-          s.goals += playerEvents.filter((e) => e.type === "goal").length;
-          s.assists += playerEvents.filter((e) => e.type === "assist").length;
-          s.yellowCards += playerEvents.filter(
-            (e) =>
-              e.type === "card" &&
-              e.description.toLowerCase().includes("yellow"),
-          ).length;
-          s.redCards += playerEvents.filter(
-            (e) =>
-              e.type === "card" && e.description.toLowerCase().includes("red"),
-          ).length;
-        });
-
-        const sortedHistory = Array.from(history.entries())
-          .map(([season, data]) => ({ season, ...data }))
-          .sort((a, b) => b.season - a.season);
-
-        setStatsHistory(sortedHistory);
       } catch (err) {
-
+        console.error("Failed to fetch player data", err);
       }
     };
     fetchData();

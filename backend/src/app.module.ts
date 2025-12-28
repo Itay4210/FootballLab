@@ -19,7 +19,9 @@ import { ScheduleModule } from '@nestjs/schedule';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
-        const uri = configService.get<string>('MONGODB_URI') || 'mongodb://127.0.0.1:27017/footballlab';
+        const uri =
+          configService.get<string>('MONGODB_URI') ||
+          'mongodb://127.0.0.1:27017/footballlab';
 
         return {
           uri,

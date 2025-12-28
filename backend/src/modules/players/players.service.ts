@@ -18,7 +18,28 @@ export class PlayersService {
     return this.playerModel.find().exec();
   }
 
-  async getTopPlayers(leagueId: string, season: number, type: string) {
+  async findById(id: string) {
+    return this.playerModel.findById(id).populate('teamId').exec();
+  }
+
+  async findByTeam(teamId: string) {
+    return this.playerModel.find({ teamId: new Types.ObjectId(teamId) }).exec();
+  }
+
+  async search(term: string) {
+    const regex = new RegExp(term, 'i');
+    return this.playerModel
+      .find({ name: { $regex: regex } })
+      .limit(10)
+      .populate('teamId')
+      .exec();
+  }
+
+  async getTopPlayers(
+    leagueId: string,
+    season: number,
+    type: string,
+  ): Promise<PlayerDocument[]> {
     const teams = await this.teamModel
       .find({ leagueId: new Types.ObjectId(leagueId) })
       .select('_id');
@@ -53,7 +74,7 @@ export class PlayersService {
   ) {
     const playerObjectId = new Types.ObjectId(playerId);
 
-    const matchFilter: any = {
+    const matchFilter: FilterQuery<MatchDocument> = {
       status: 'finished',
       'events.playerId': playerObjectId,
     };
@@ -61,7 +82,12 @@ export class PlayersService {
     if (season) matchFilter.seasonNumber = Number(season);
     if (leagueId) matchFilter.leagueId = new Types.ObjectId(leagueId);
 
-    const stats = await this.matchModel.aggregate([
+    const stats = await this.matchModel.aggregate<{
+      goals: number;
+      assists: number;
+      yellowCards: number;
+      redCards: number;
+    }>([
       {
         $match: matchFilter,
       },
@@ -103,6 +129,78 @@ export class PlayersService {
       saves: 0,
       distanceCovered: 0,
     };
+  }
+
+  async getPlayerHistory(playerId: string) {
+    const playerObjectId = new Types.ObjectId(playerId);
+
+    // Get stats grouped by season
+    const statsBySeason = await this.matchModel.aggregate<{
+      _id: number;
+      goals: number;
+      assists: number;
+      yellowCards: number;
+      redCards: number;
+    }>([
+      {
+        $match: {
+          status: 'finished',
+          'events.playerId': playerObjectId,
+        },
+      },
+      { $unwind: '$events' },
+      { $match: { 'events.playerId': playerObjectId } },
+      {
+        $group: {
+          _id: '$seasonNumber',
+          goals: { $sum: { $cond: [{ $eq: ['$events.type', 'goal'] }, 1, 0] } },
+          assists: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'assist'] }, 1, 0] },
+          },
+          yellowCards: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'yellowCard'] }, 1, 0] },
+          },
+          redCards: {
+            $sum: { $cond: [{ $eq: ['$events.type', 'redCard'] }, 1, 0] },
+          },
+        },
+      },
+      { $sort: { _id: -1 } },
+    ]);
+
+    // Get match counts grouped by season (separate aggregation because unwinding events multiplies matches)
+    const matchCounts = await this.matchModel.aggregate<{
+      _id: number;
+      matches: number;
+    }>([
+      {
+        $match: {
+          status: 'finished',
+          'events.playerId': playerObjectId,
+        },
+      },
+      {
+        $group: {
+          _id: '$seasonNumber',
+          matches: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Merge results
+    return statsBySeason.map((seasonStats) => {
+      const seasonMatchCount = matchCounts.find(
+        (m) => m._id === seasonStats._id,
+      );
+      return {
+        season: seasonStats._id || 1,
+        goals: seasonStats.goals,
+        assists: seasonStats.assists,
+        yellowCards: seasonStats.yellowCards,
+        redCards: seasonStats.redCards,
+        matches: seasonMatchCount ? seasonMatchCount.matches : 0,
+      };
+    });
   }
 
   async seed() {

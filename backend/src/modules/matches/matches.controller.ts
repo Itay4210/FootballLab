@@ -3,6 +3,14 @@ import { MatchesService } from './matches.service';
 @Controller('matches')
 export class MatchesController {
   constructor(private readonly matchesService: MatchesService) {}
+  @Get('league/:leagueId')
+  async getLeagueMatches(
+    @Param('leagueId') leagueId: string,
+    @Query('season') season: string,
+  ) {
+    return this.matchesService.findByLeague(leagueId, Number(season));
+  }
+
   @Get('team/:teamId')
   async getTeamMatches(
     @Param('teamId') teamId: string,

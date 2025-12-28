@@ -3,7 +3,6 @@ import { useSearchParams, Link } from "react-router-dom";
 import {
   FootballAPI,
   type Team,
-  type TeamStats,
   type Player,
   type Match,
   type SeasonSummary,
@@ -14,19 +13,9 @@ import { SummerSummaryModal } from "../components/SummerSummaryModal";
 import { useData } from "../context/DataContext";
 import styles from "./Dashboard.module.css";
 
-const emptyStats = (): TeamStats => ({
-  matches: 0,
-  points: 0,
-  wins: 0,
-  draws: 0,
-  losses: 0,
-  goalsFor: 0,
-  goalsAgainst: 0,
-});
-
 export function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { leagues, allTeams, allMatches, loading, refreshData } = useData();
+  const { leagues, loading, refreshData } = useData();
 
   const [isSimulating, setIsSimulating] = useState(false);
   const selectedLeague = searchParams.get("league");
@@ -62,120 +51,41 @@ export function Dashboard() {
     if (Array.isArray(leagues) && leagues.length > 0 && !selectedLeague) {
       setSelectedLeague(leagues[0]._id);
     }
-
-    const seasons = Array.from(
-      new Set(
-        (Array.isArray(allMatches) ? allMatches : []).map(
-          (m) => m.seasonNumber || 1,
-        ),
-      ),
-    );
-    const sortedSeasons = seasons.sort((a, b) => b - a);
-    setAvailableSeasons(sortedSeasons.length > 0 ? sortedSeasons : [1]);
-
-    if (sortedSeasons.length > 0 && !sortedSeasons.includes(selectedSeason)) {
-      setSelectedSeason(sortedSeasons[0]);
-    }
-  }, [leagues, allMatches, loading, selectedLeague]);
+  }, [leagues, loading, selectedLeague]);
 
   useEffect(() => {
     if (
       !selectedLeague ||
       loading ||
       !Array.isArray(leagues) ||
-      leagues.length === 0 ||
-      allTeams.length === 0
+      leagues.length === 0
     )
       return;
 
-    const currentLeagueObj = Array.isArray(leagues)
-      ? leagues.find((l) => l._id === selectedLeague)
-      : null;
-    const isChampionsLeague =
-      currentLeagueObj?.name === "Champions League" ||
-      currentLeagueObj?.name === "Europe";
+    const fetchLeagueData = async () => {
+      try {
+        const [leagueMatches, leagueTable] = await Promise.all([
+          FootballAPI.getLeagueMatches(selectedLeague, selectedSeason),
+          FootballAPI.getLeagueTable(selectedLeague),
+        ]);
+        setMatches(leagueMatches);
+        setTeams(leagueTable);
 
-    const leagueMatches = allMatches.filter(
-      (m) =>
-        m.leagueId === selectedLeague &&
-        (m.seasonNumber || 1) === selectedSeason,
-    );
-    setMatches(leagueMatches);
+        const seasons = Array.from(
+          new Set(
+            (Array.isArray(leagueMatches) ? leagueMatches : []).map(
+              (m) => m.seasonNumber || 1,
+            ),
+          ),
+        );
+        const sortedSeasons = seasons.sort((a, b) => b - a);
+        setAvailableSeasons(sortedSeasons.length > 0 ? sortedSeasons : [1]);
+      } catch (e) {}
+    };
+    fetchLeagueData();
+  }, [selectedLeague, selectedSeason, loading, leagues]);
 
-    const teamStatsMap = new Map<
-      string,
-      { season: TeamStats; cl: TeamStats }
-    >();
-    allTeams.forEach((t) => {
-      teamStatsMap.set(t._id, {
-        season: emptyStats(),
-        cl: emptyStats(),
-      });
-    });
-
-    leagueMatches.forEach((m) => {
-      if (m.status !== "finished") return;
-      const homeStats = teamStatsMap.get(m.homeTeam);
-      const awayStats = teamStatsMap.get(m.awayTeam);
-      if (!homeStats || !awayStats) return;
-
-      const update = (stats: TeamStats, gf: number, ga: number) => {
-        stats.matches++;
-        stats.goalsFor += gf;
-        stats.goalsAgainst += ga;
-        if (gf > ga) {
-          stats.wins++;
-          stats.points += 3;
-        } else if (gf === ga) {
-          stats.draws++;
-          stats.points += 1;
-        } else {
-          stats.losses++;
-        }
-      };
-
-      if (isChampionsLeague) {
-        update(homeStats.cl, m.score.home, m.score.away);
-        update(awayStats.cl, m.score.away, m.score.home);
-      } else {
-        update(homeStats.season, m.score.home, m.score.away);
-        update(awayStats.season, m.score.away, m.score.home);
-      }
-    });
-
-    const participatingTeamIds = new Set<string>();
-    leagueMatches.forEach((m) => {
-      participatingTeamIds.add(m.homeTeam);
-      participatingTeamIds.add(m.awayTeam);
-    });
-
-    const teamsWithStats = allTeams
-      .filter((t) => participatingTeamIds.has(t._id))
-      .map((t) => {
-        const stats = teamStatsMap.get(t._id);
-        return {
-          ...t,
-          seasonStats: stats?.season || t.seasonStats,
-          clStats: stats?.cl || t.clStats,
-        };
-      });
-
-    const sortedTeams = teamsWithStats.sort((a, b) => {
-      const statsA = isChampionsLeague
-        ? a.clStats || emptyStats()
-        : a.seasonStats;
-      const statsB = isChampionsLeague
-        ? b.clStats || emptyStats()
-        : b.seasonStats;
-      return (
-        statsB.points - statsA.points ||
-        statsB.goalsFor -
-          statsB.goalsAgainst -
-          (statsA.goalsFor - statsA.goalsAgainst)
-      );
-    });
-    setTeams(sortedTeams);
-
+  useEffect(() => {
     const fetchTopPlayers = async () => {
       if (selectedLeague) {
         try {
@@ -244,13 +154,11 @@ export function Dashboard() {
           setTopSaves(saves);
           setTopInterceptions(interceptions);
           setTopDistance(distance);
-        } catch (err) {
-
-        }
+        } catch (err) {}
       }
     };
     fetchTopPlayers();
-  }, [selectedLeague, selectedSeason, allTeams, allMatches, leagues, loading]);
+  }, [selectedLeague, selectedSeason, leagues, loading]);
 
   const selectedLeagueObj = Array.isArray(leagues)
     ? leagues.find((l) => l._id === selectedLeague)
@@ -269,39 +177,37 @@ export function Dashboard() {
           </Link>
           <button
             onClick={async () => {
-                const data = await FootballAPI.getSeasonSummary();
-                setSummaryData(data);
-                setShowSummary(true);
+              const data = await FootballAPI.getSeasonSummary();
+              setSummaryData(data);
+              setShowSummary(true);
             }}
             style={{
-                marginLeft: '10px',
-                padding: '8px 16px',
-                backgroundColor: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
+              marginLeft: "10px",
+              padding: "8px 16px",
+              backgroundColor: "#f59e0b",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
             ☀️ Summer Report
           </button>
           <button
             onClick={async () => {
-                if (isSimulating) return;
-                setIsSimulating(true);
-                try {
-
-                    await FootballAPI.runSimulation();
-                    await refreshData();
-                } catch(e) {
-
-                    alert("Failed to run simulation");
-                } finally {
-                    setIsSimulating(false);
-                }
+              if (isSimulating) return;
+              setIsSimulating(true);
+              try {
+                await FootballAPI.runSimulation();
+                await refreshData();
+              } catch (e) {
+                alert("Failed to run simulation");
+              } finally {
+                setIsSimulating(false);
+              }
             }}
-            className={`${styles.runSimButton} ${isSimulating ? styles.disabled : ''}`}
+            className={`${styles.runSimButton} ${isSimulating ? styles.disabled : ""}`}
             title="Run Simulation Manually"
             disabled={isSimulating}
           >
