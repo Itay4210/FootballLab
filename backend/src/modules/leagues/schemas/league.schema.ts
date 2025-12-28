@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
-export type LeagueDocument = League & Document;
+import { HydratedDocument } from 'mongoose';
+export type LeagueDocument = HydratedDocument<League>;
 @Schema({ timestamps: true })
 export class League {
   @Prop({ required: true, unique: true })
@@ -9,9 +9,7 @@ export class League {
   country: string;
   @Prop({ default: 1 })
   currentMatchday: number;
-  @Prop({ default: '2025/2026' })
-  season: string;
   @Prop({ default: 1 })
   seasonNumber: number;
 }
-export const LeagueSchema = SchemaFactory.createForClass(League);
+export const LeagueSchema = SchemaFactory.createForClass(League) as import('mongoose').Schema<League>;

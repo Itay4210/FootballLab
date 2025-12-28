@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-export type PlayerDocument = Player & Document;
+import { HydratedDocument, Types } from 'mongoose';
+export type PlayerDocument = HydratedDocument<Player>;
 export enum PlayerPosition {
   GK = 'GK',
   CB = 'CB',
@@ -59,4 +59,4 @@ export class Player {
     distanceCovered: number;
   };
 }
-export const PlayerSchema = SchemaFactory.createForClass(Player);
+export const PlayerSchema = SchemaFactory.createForClass(Player) as import('mongoose').Schema<Player>;

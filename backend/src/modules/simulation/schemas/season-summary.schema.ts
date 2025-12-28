@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type SeasonSummaryDocument = SeasonSummary & Document;
+export type SeasonSummaryDocument = HydratedDocument<SeasonSummary>;
 
 @Schema({ timestamps: true })
 export class SeasonSummary {
@@ -33,4 +33,4 @@ export class SeasonSummary {
   };
 }
 
-export const SeasonSummarySchema = SchemaFactory.createForClass(SeasonSummary);
+export const SeasonSummarySchema = SchemaFactory.createForClass(SeasonSummary) as import('mongoose').Schema<SeasonSummary>;

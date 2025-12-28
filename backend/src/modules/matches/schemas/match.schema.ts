@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-export type MatchDocument = Match & Document;
+import { HydratedDocument, Types } from 'mongoose';
+export type MatchDocument = HydratedDocument<Match>;
 @Schema()
 export class MatchEvent {
   @Prop({ required: true })
@@ -50,4 +50,4 @@ export class Match {
     shotsOnTarget: number;
   };
 }
-export const MatchSchema = SchemaFactory.createForClass(Match);
+export const MatchSchema = SchemaFactory.createForClass(Match) as import('mongoose').Schema<Match>;
