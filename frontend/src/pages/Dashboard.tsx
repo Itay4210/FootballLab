@@ -181,14 +181,21 @@ export function Dashboard() {
               setSummaryData(data);
               setShowSummary(true);
             }}
+            disabled={availableSeasons.length === 1}
+            title={
+              availableSeasons.length === 1
+                ? "Available after Season 1"
+                : "View Summer Report"
+            }
             style={{
               marginLeft: "10px",
               padding: "8px 16px",
-              backgroundColor: "#f59e0b",
+              backgroundColor:
+                availableSeasons.length === 1 ? "#9ca3af" : "#f59e0b",
               color: "white",
               border: "none",
               borderRadius: "6px",
-              cursor: "pointer",
+              cursor: availableSeasons.length === 1 ? "not-allowed" : "pointer",
               fontWeight: "bold",
             }}
           >

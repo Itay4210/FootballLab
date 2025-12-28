@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
-export type TeamDocument = Team & Document;
+import { HydratedDocument, Types } from 'mongoose';
+export type TeamDocument = HydratedDocument<Team>;
 interface TeamSeasonStats {
   matches: number;
   points: number;
@@ -57,4 +57,4 @@ export class Team {
   })
   clStats: TeamSeasonStats;
 }
-export const TeamSchema = SchemaFactory.createForClass(Team);
+export const TeamSchema = SchemaFactory.createForClass(Team) as import('mongoose').Schema<Team>;
