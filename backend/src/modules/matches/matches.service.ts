@@ -14,6 +14,41 @@ export class MatchesService {
   async findAll() {
     return this.matchModel.find().exec();
   }
+
+  async findByLeague(leagueId: string, seasonNumber?: number) {
+    const query: FilterQuery<MatchDocument> = {
+      leagueId: new Types.ObjectId(leagueId),
+    };
+    if (seasonNumber) {
+      query.seasonNumber = seasonNumber;
+    }
+    const matches = await this.matchModel
+      .find(query)
+      .populate('homeTeam', 'name')
+      .populate('awayTeam', 'name')
+      .populate('leagueId', 'name')
+      .populate('events.playerId', 'name')
+      .sort({ matchday: 1 })
+      .lean()
+      .exec();
+
+    type PopulatedMatch = Omit<Match, 'homeTeam' | 'awayTeam' | 'leagueId'> & {
+      _id: Types.ObjectId;
+      homeTeam: { _id: Types.ObjectId; name: string };
+      awayTeam: { _id: Types.ObjectId; name: string };
+      leagueId?: { name: string };
+    };
+
+    return (matches as unknown as PopulatedMatch[]).map((match) => ({
+      ...match,
+      homeTeam: match.homeTeam._id,
+      homeTeamName: match.homeTeam.name,
+      awayTeam: match.awayTeam._id,
+      awayTeamName: match.awayTeam.name,
+      leagueName: match.leagueId?.name,
+    }));
+  }
+
   private shuffleArray<T>(array: T[]): T[] {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -72,6 +107,7 @@ export class MatchesService {
       .populate('homeTeam', 'name')
       .populate('awayTeam', 'name')
       .populate('leagueId', 'name')
+      .populate('events.playerId', 'name')
       .sort({ matchday: 1 })
       .lean()
       .exec();

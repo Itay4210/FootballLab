@@ -19,7 +19,7 @@
   border-radius: 16px;
   width: 90%;
   max-width: 900px;
-  height: 85vh; /* Fixed height to allow scrolling content */
+  height: 85vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
@@ -68,7 +68,6 @@
   color: #fff;
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   background-color: #252525;
@@ -127,7 +126,6 @@
   gap: 8px;
 }
 
-/* Most Improved Player */
 .heroSection {
   display: flex;
   flex-direction: column;
@@ -205,7 +203,6 @@
   text-shadow: 0 0 20px rgba(74, 222, 128, 0.3);
 }
 
-/* Transfers List */
 .transfersList {
   display: flex;
   flex-direction: column;
@@ -253,7 +250,6 @@
   font-size: 1.2rem;
 }
 
-/* Retirements Grid */
 .retirementsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -329,12 +325,12 @@
     text-align: center;
     padding: 16px;
   }
-  
+
   .transferArrow {
     transform: rotate(90deg);
     margin: 4px 0;
   }
-  
+
   .transferFee {
     text-align: center;
     margin-top: 8px;
@@ -345,7 +341,7 @@
     gap: 16px;
     overflow-x: auto;
   }
-  
+
   .tab {
     white-space: nowrap;
   }
