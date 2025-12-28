@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, FilterQuery } from 'mongoose';
 import { Team, TeamDocument } from './schemas/team.schema';
 import { League, LeagueDocument } from '../leagues/schemas/league.schema';
 import { Match, MatchDocument } from '../matches/schemas/match.schema';
@@ -15,6 +15,19 @@ export class TeamsService {
 
   async findAll() {
     return this.teamModel.find().populate('leagueId').exec();
+  }
+
+  async findById(id: string) {
+    return this.teamModel.findById(id).populate('leagueId').exec();
+  }
+
+  async search(term: string) {
+    const regex = new RegExp(term, 'i');
+    return this.teamModel
+      .find({ name: { $regex: regex } })
+      .limit(10)
+      .populate('leagueId')
+      .exec();
   }
 
   async getTable(leagueId: string) {
@@ -41,7 +54,7 @@ export class TeamsService {
   ) {
     const teamObjectId = new Types.ObjectId(teamId);
 
-    const matchFilter: any = {
+    const matchFilter: FilterQuery<MatchDocument> = {
       status: 'finished',
       $or: [{ homeTeam: teamObjectId }, { awayTeam: teamObjectId }],
     };
