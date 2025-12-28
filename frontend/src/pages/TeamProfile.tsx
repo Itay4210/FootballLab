@@ -34,7 +34,6 @@ export const TeamProfile = () => {
     }
   }, [teamId, selectedSeason]);
 
-  // Fetch seasons
   useEffect(() => {
     if (teamId) {
       FootballAPI.getTeamMatches(teamId).then((all) => {
@@ -251,10 +250,7 @@ export const TeamProfile = () => {
                                 typeof e.playerId === "object"
                                   ? (e.playerId as any).name
                                   : "Unknown";
-                              // Simple logic: if scorer name is found in team players list... but we removed allPlayers global fetch.
-                              // So we just show all goals here for now, maybe in grey if we can't confirm team?
-                              // Or rely on backend providing scorer team ID in event? It doesn't yet.
-                              // Let's just show all goals.
+
                               return (
                                 <span key={idx} className="text-slate-400">
                                   ⚽ {e.minute}' {pName}

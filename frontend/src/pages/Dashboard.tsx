@@ -51,8 +51,6 @@ export function Dashboard() {
     if (Array.isArray(leagues) && leagues.length > 0 && !selectedLeague) {
       setSelectedLeague(leagues[0]._id);
     }
-    // We assume 1 for now if we can't easily get max season without fetching matches
-    // Or we could fetch a lightweight endpoint for available seasons
   }, [leagues, loading, selectedLeague]);
 
   useEffect(() => {
@@ -65,34 +63,30 @@ export function Dashboard() {
       return;
 
     const fetchLeagueData = async () => {
-        try {
-            const [leagueMatches, leagueTable] = await Promise.all([
-                FootballAPI.getLeagueMatches(selectedLeague, selectedSeason),
-                FootballAPI.getLeagueTable(selectedLeague)
-            ]);
-            setMatches(leagueMatches);
-            setTeams(leagueTable);
-            
-            // Extract seasons from matches (optional, or better keep logic)
-             const seasons = Array.from(
-                new Set(
-                    (Array.isArray(leagueMatches) ? leagueMatches : []).map(
-                    (m) => m.seasonNumber || 1,
-                    ),
-                ),
-                );
-             const sortedSeasons = seasons.sort((a, b) => b - a);
-             setAvailableSeasons(sortedSeasons.length > 0 ? sortedSeasons : [1]);
-        } catch (e) {
-            console.error("Failed to fetch league data", e);
-        }
+      try {
+        const [leagueMatches, leagueTable] = await Promise.all([
+          FootballAPI.getLeagueMatches(selectedLeague, selectedSeason),
+          FootballAPI.getLeagueTable(selectedLeague),
+        ]);
+        setMatches(leagueMatches);
+        setTeams(leagueTable);
+
+        const seasons = Array.from(
+          new Set(
+            (Array.isArray(leagueMatches) ? leagueMatches : []).map(
+              (m) => m.seasonNumber || 1,
+            ),
+          ),
+        );
+        const sortedSeasons = seasons.sort((a, b) => b - a);
+        setAvailableSeasons(sortedSeasons.length > 0 ? sortedSeasons : [1]);
+      } catch (e) {}
     };
     fetchLeagueData();
-
   }, [selectedLeague, selectedSeason, loading, leagues]);
 
   useEffect(() => {
-      const fetchTopPlayers = async () => {
+    const fetchTopPlayers = async () => {
       if (selectedLeague) {
         try {
           const [
@@ -160,9 +154,7 @@ export function Dashboard() {
           setTopSaves(saves);
           setTopInterceptions(interceptions);
           setTopDistance(distance);
-        } catch (err) {
-
-        }
+        } catch (err) {}
       }
     };
     fetchTopPlayers();
@@ -185,39 +177,37 @@ export function Dashboard() {
           </Link>
           <button
             onClick={async () => {
-                const data = await FootballAPI.getSeasonSummary();
-                setSummaryData(data);
-                setShowSummary(true);
+              const data = await FootballAPI.getSeasonSummary();
+              setSummaryData(data);
+              setShowSummary(true);
             }}
             style={{
-                marginLeft: '10px',
-                padding: '8px 16px',
-                backgroundColor: '#f59e0b',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
+              marginLeft: "10px",
+              padding: "8px 16px",
+              backgroundColor: "#f59e0b",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontWeight: "bold",
             }}
           >
             ☀️ Summer Report
           </button>
           <button
             onClick={async () => {
-                if (isSimulating) return;
-                setIsSimulating(true);
-                try {
-
-                    await FootballAPI.runSimulation();
-                    await refreshData();
-                } catch(e) {
-
-                    alert("Failed to run simulation");
-                } finally {
-                    setIsSimulating(false);
-                }
+              if (isSimulating) return;
+              setIsSimulating(true);
+              try {
+                await FootballAPI.runSimulation();
+                await refreshData();
+              } catch (e) {
+                alert("Failed to run simulation");
+              } finally {
+                setIsSimulating(false);
+              }
             }}
-            className={`${styles.runSimButton} ${isSimulating ? styles.disabled : ''}`}
+            className={`${styles.runSimButton} ${isSimulating ? styles.disabled : ""}`}
             title="Run Simulation Manually"
             disabled={isSimulating}
           >
