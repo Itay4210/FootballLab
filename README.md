@@ -1,48 +1,59 @@
-# FootballLab
+# ⚽ FootballLab
 
-FootballLab is a comprehensive football simulation and management platform. It allows users to simulate football seasons, track league standings, manage teams and players, and experience the evolution of a football world over time.
+![FootballLab Banner](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%282%29.png)
 
-![League Table](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%282%29.png)
-*Live League Standings across multiple European leagues*
+> **The Ultimate Football Simulation Engine.**
+> Manage teams, simulate seasons, track stats, and witness the evolution of the football world.
 
-## 🚀 Features
+---
 
-*   **Advanced Simulation Engine**: Automatically simulates matchdays, handling multiple leagues simultaneously (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
-*   **Champions League Integration**: Supports both domestic leagues and European competitions with knockout logic.
-*   **Head-to-Head Comparison**: Compare any two players side-by-side to analyze their performance (Goals, Assists, Key Passes, and more).
-*   **Detailed Statistics Dashboard**: Track Top Scorers, Top Assisters, Clean Sheets, Cards, Tackles, and Key Passes.
-*   **Season Evolution**: Teams and players evolve over seasons. Stats are tracked, archived, and reset for new seasons seamlessly.
-*   **Summer Reports**: Get detailed summaries of season transitions and player growth.
+## 📖 Overview
 
-## 🖼️ Screenshots
+**FootballLab** is a full-stack web application that brings the excitement of football management to your browser. It simulates entire seasons across major European leagues, tracks granular player statistics, and allows for deep analysis through head-to-head comparisons and historical data.
 
-| Player Comparison | Season Stats |
-|:-----------------:|:------------:|
-| ![Comparison](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%283%29.png) | ![Stats](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%284%29.png) |
-| *Compare players head-to-head* | *Detailed season statistics* |
+Whether you're analyzing the next top scorer or watching a young prodigy evolve into a legend, FootballLab provides the data and the tools to see it happen.
+
+---
+
+## ✨ Key Features
+
+*   **🏟️ Advanced Simulation Engine**: Real-time match simulation across 5 major leagues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1).
+*   **🏆 Champions League**: Fully integrated European competition with group stages and knockout rounds.
+*   **📊 Deep Analytics**:
+    *   **Head-to-Head**: Compare any two players side-by-side (Goals, Assists, xG, Key Passes).
+    *   **Leaderboards**: Top Scorers, Assists, Clean Sheets, Yellow/Red Cards.
+*   **📈 Player Evolution**: Dynamic growth system where players improve or decline based on age, performance, and potential.
+*   **📅 Seasonal Progression**: Automatic transition between seasons, including historical archiving and summer transfer windows.
+
+---
 
 ## 🛠️ Tech Stack
 
-### Backend
-*   **Framework**: [NestJS](https://nestjs.com/)
-*   **Language**: TypeScript
-*   **Database**: [MongoDB](https://www.mongodb.com/) with Mongoose
-*   **Configuration**: `@nestjs/config` for environment management
-*   **Scheduling**: `@nestjs/schedule` for automated match simulation
+### **Backend** (NestJS)
+![NestJS](https://img.shields.io/badge/nestjs-%23E0234E.svg?style=for-the-badge&logo=nestjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 
-### Frontend
-*   **Library**: [React](https://react.dev/) (v19)
-*   **Build Tool**: [Vite](https://vitejs.dev/)
-*   **Styling**: TailwindCSS
-*   **HTTP Client**: Axios
+*   **Framework**: [NestJS](https://nestjs.com/) - Scalable Node.js framework.
+*   **Database**: MongoDB with Mongoose ODM.
+*   **Scheduler**: `@nestjs/schedule` for match simulations.
 
-## 📋 Prerequisites
+### **Frontend** (React + Vite)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white) ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-Before running the project, ensure you have the following installed:
-*   [Node.js](https://nodejs.org/) (LTS version recommended)
-*   [MongoDB](https://www.mongodb.com/try/download/community) (Running locally on default port `27017`)
+*   **Core**: React v19.
+*   **Styling**: TailwindCSS for modern, responsive design.
+*   **State & Fetching**: Axios & Context API.
 
-## 📦 Installation
+---
+
+## 🚀 Getting Started
+
+You can run FootballLab in two ways: using **Docker** (recommended) or **Manually**.
+
+### 🐳 Option A: Docker (Recommended)
+
+Run the entire stack (Backend, Frontend, Database) with a single command.
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 1.  **Clone the repository**
     ```bash
@@ -50,86 +61,88 @@ Before running the project, ensure you have the following installed:
     cd FootballLab
     ```
 
-2.  **Install Backend Dependencies**
+2.  **Launch the App**
     ```bash
-    cd backend
+    docker-compose up --build
+    ```
+
+3.  **Explore**
+    *   💻 **Frontend**: [http://localhost:8080](http://localhost:8080)
+    *   ⚙️ **Backend API**: [http://localhost:3000](http://localhost:3000)
+
+---
+
+### 📦 Option B: Manual Installation (For Developers)
+
+**Prerequisites:** Node.js (LTS), MongoDB (running locally on port `27017`).
+
+1.  **Clone & Install Backend**
+    ```bash
+    git clone https://github.com/Itay4210/FootballLab.git
+    cd FootballLab/backend
     npm install
     ```
 
-3.  **Configure Environment Variables**
-    Create a `.env` file in the `backend` directory based on the example below:
-    ```bash
-    # backend/.env
+2.  **Configure Environment**
+    Create a `.env` file in `backend/`:
+    ```env
     MONGODB_URI=mongodb://127.0.0.1:27017/footballab
     PORT=3000
     ```
 
-4.  **Install Frontend Dependencies**
+3.  **Start Backend**
+    ```bash
+    npm run start:dev
+    ```
+
+4.  **Install & Start Frontend**
+    Open a new terminal:
     ```bash
     cd ../frontend
     npm install
+    npm run dev
     ```
+    *Frontend will be available at `http://localhost:5173`.*
 
-## 🚀 Running the Application
+---
 
-### Start the Database
-Ensure your MongoDB instance is running.
-```bash
-# If using local MongoDB service
-net start MongoDB
-# OR docker
-docker run -d -p 27017:27017 mongo
-```
+## 🖼️ Gallery
 
-### Start the Backend
-Open a terminal in the `backend` directory:
-```bash
-cd backend
-npm run start:dev
-```
-The backend server will start on `http://localhost:3000`.
+| **Player Comparison** | **Season Stats** |
+|:---:|:---:|
+| ![Comparison](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%283%29.png) | ![Stats](docs/screenshots/%E2%80%8F%E2%80%8F%D7%A6%D7%99%D7%9C%D7%95%D7%9D%20%D7%9E%D7%A1%D7%9A%20%284%29.png) |
 
-### Start the Frontend
-Open a new terminal in the `frontend` directory:
-```bash
-cd frontend
-npm run dev
-```
-The frontend application will typically be available at `http://localhost:5173`.
+---
 
 ## 📂 Project Structure
 
-```
+```bash
 FootballLab/
 ├── backend/            # NestJS API application
 │   ├── src/
-│   │   ├── modules/    # Feature modules (Leagues, Matches, Players, etc.)
-│   │   ├── schemas/    # Database schemas
-│   │   └── ...
-│   ├── .env            # Environment variables (create this file)
+│   │   ├── modules/    # Domain modules (Leagues, Matches, Players, etc.)
+│   │   ├── schemas/    # Mongoose models & schemas
+│   │   └── common/     # Shared utilities & constants
+│   ├── Dockerfile      # Backend container config
 │   └── ...
-├── frontend/           # React + Vite application
+├── frontend/           # React application
 │   ├── src/
-│   │   ├── components/ # Reusable UI components
-│   │   ├── pages/      # Application pages (Comparison, Dashboard, Profiles)
-│   │   └── ...
+│   │   ├── components/ # Reusable UI blocks
+│   │   ├── pages/      # Route components (Dashboard, Profile, etc.)
+│   │   └── services/   # API integration logic
+│   ├── Dockerfile      # Frontend container config
 │   └── ...
-└── ...
+├── docker-compose.yml  # Orchestration file
+└── README.md
 ```
 
-## 🤝 Contributing
-
-1.  Fork the project
-2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+---
 
 ## 👤 Author
 
 **Itay4210**
 *   GitHub: [@Itay4210](https://github.com/Itay4210)
 
-## 📄 License
+---
 
-This project is private and unlicensed.
+*Private Project - All Rights Reserved*

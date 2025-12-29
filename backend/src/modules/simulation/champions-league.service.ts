@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Match, MatchDocument } from '../matches/schemas/match.schema';
@@ -8,8 +8,6 @@ import { MatchesService } from '../matches/matches.service';
 
 @Injectable()
 export class ChampionsLeagueService {
-  private readonly logger = new Logger(ChampionsLeagueService.name);
-
   constructor(
     @InjectModel(Match.name) private matchModel: Model<MatchDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,

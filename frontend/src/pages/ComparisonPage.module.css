@@ -26,6 +26,12 @@
   justify-content: space-between;
 }
 
+.headerTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .backLink {
   color: #94a3b8;
   transition: color 150ms ease;
@@ -291,6 +297,15 @@
   margin-bottom: 0.75rem;
 }
 
+.opacity75 {
+  opacity: 0.75;
+}
+
+.selectWrapper {
+  width: 100%;
+  max-width: 200px;
+}
+
 .contextSelect {
   width: 100%;
   background-color: rgba(2, 6, 23, 0.5);
@@ -314,6 +329,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.loadingStats {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }
 
 .statsGrid {
@@ -394,6 +424,10 @@
   margin-bottom: 2rem;
 }
 
+.statsSpace > * + * {
+  margin-top: 2rem;
+}
+
 .statRowLabel {
   display: flex;
   justify-content: space-between;
@@ -423,6 +457,14 @@
   height: 100%;
   border-radius: 9999px;
   transition: width 700ms ease;
+}
+
+.statsDivider {
+  width: 0.25rem;
+  height: 100%;
+  background-color: #1e293b;
+  border-radius: 9999px;
+  flex-shrink: 0;
 }
 
 .bgEmerald {
@@ -470,6 +512,11 @@
   animation: fade-in 0.5s ease-out forwards;
 }
 
+.searchHeader {
+  padding: 1rem;
+  border-bottom: 1px solid #1e293b;
+}
+
 .searchInput {
   width: 100%;
   background-color: #1e293b;
@@ -486,6 +533,27 @@
 }
 
 .searchInput::placeholder {
+  color: #64748b;
+}
+
+.searchResults {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.searchingText {
+  text-align: center;
+  padding: 1rem;
+  color: #94a3b8;
+}
+
+.noResultsText {
+  text-align: center;
+  padding: 2rem;
   color: #64748b;
 }
 
@@ -521,4 +589,18 @@
 
 .resultItem:hover .resultAvatar {
   border-color: #475569;
+}
+
+.resultName {
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.resultItem:hover .resultName {
+  color: #ffffff;
+}
+
+.resultSubtitle {
+  font-size: 0.75rem;
+  color: #64748b;
 }
