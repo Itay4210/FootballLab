@@ -54,10 +54,9 @@ export const ComparisonPage = () => {
 
   return (
     <div className={styles.container}>
-      {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerContent}>
-          <div className="flex items-center gap-4">
+          <div className={styles.headerTitleContainer}>
             <Link to="/" className={styles.backLink}>
               ← Back
             </Link>
@@ -88,12 +87,9 @@ export const ComparisonPage = () => {
       </header>
 
       <div className={styles.mainContent}>
-        {/* Top Section: Two Entities */}
         <div className={styles.comparisonArea}>
-          {/* VS Badge */}
           <div className={styles.vsBadge}>VS</div>
 
-          {/* Left Side (A) */}
           <EntityCard
             side="A"
             type={compareType}
@@ -107,7 +103,6 @@ export const ComparisonPage = () => {
             isCompact={true}
           />
 
-          {/* Right Side (B) */}
           <EntityCard
             side="B"
             type={compareType}
@@ -122,7 +117,6 @@ export const ComparisonPage = () => {
           />
         </div>
 
-        {/* Detailed Stats Comparison */}
         {entityA && entityB && statsA && statsB && (
           <div className={styles.comparisonStatsContainer}>
             <ComparisonStats
@@ -134,7 +128,6 @@ export const ComparisonPage = () => {
         )}
       </div>
 
-      {/* Search Modal */}
       {isSearchOpen && (
         <SearchModal
           isOpen={!!isSearchOpen}
@@ -194,13 +187,11 @@ const EntityCard = ({
           try {
             team = await FootballAPI.getTeam(player.teamId._id);
           } catch (e) {
-            console.error(e);
           }
         } else {
           try {
             team = await FootballAPI.getTeam(player.teamId as string);
           } catch (e) {
-            console.error(e);
           }
         }
       }
@@ -322,7 +313,6 @@ const EntityCard = ({
         ✕
       </button>
 
-      {/* Header Info */}
       <div
         className={`${styles.cardHeader} ${
           isCompact ? styles.paddingCompact : styles.paddingNormal
@@ -347,7 +337,7 @@ const EntityCard = ({
             ? (entity as Player).position
             : (entity as Team).country}
           {type === "players" && (entity as Player).teamId && (
-            <span className="opacity-75">
+            <span className={styles.opacity75}>
               {" "}
               •{" "}
               {typeof (entity as Player).teamId === "object"
@@ -357,8 +347,7 @@ const EntityCard = ({
           )}
         </p>
 
-        {/* Context Select (League/Season) */}
-        <div className="w-full max-w-[200px]">
+        <div className={styles.selectWrapper}>
           <select
             value={selectedHistoryIndex}
             onChange={(e) => setSelectedHistoryIndex(Number(e.target.value))}
@@ -373,14 +362,13 @@ const EntityCard = ({
         </div>
       </div>
 
-      {/* Big Stats */}
       <div
         className={`${styles.statsArea} ${
           isCompact ? styles.paddingCompact : styles.paddingNormal
         }`}
       >
         {!stats ? (
-          <div className="animate-pulse text-slate-600 text-sm">
+          <div className={styles.loadingStats}>
             Loading stats...
           </div>
         ) : (
@@ -468,7 +456,7 @@ function StatsDisplay<T>({ config, statsA, statsB }: StatsDisplayProps<T>) {
   return (
     <div className={styles.detailedStatsBox}>
       <h3 className={styles.breakdownTitle}>Detailed Breakdown</h3>
-      <div className="space-y-8">
+      <div className={styles.statsSpace}>
         {config.map((stat) => {
           const valA = (statsA[stat.key] as number) || 0;
           const valB = (statsB[stat.key] as number) || 0;
@@ -514,7 +502,7 @@ function StatsDisplay<T>({ config, statsA, statsB }: StatsDisplayProps<T>) {
                   />
                 </div>
 
-                <div className="w-1 h-full bg-slate-800 rounded-full shrink-0" />
+                <div className={styles.statsDivider} />
 
                 <div
                   className={styles.barContainer}
@@ -564,7 +552,6 @@ const SearchModal = ({ onClose, type, onSelect }: SearchModalProps) => {
         }
         setResults(data);
       } catch (e) {
-        console.error(e);
       } finally {
         setLoading(false);
       }
@@ -583,12 +570,10 @@ const SearchModal = ({ onClose, type, onSelect }: SearchModalProps) => {
 
   return (
     <div className={styles.modalOverlay}>
-      {/* Backdrop */}
       <div className={styles.modalBackdrop} onClick={onClose} />
 
-      {/* Modal Window */}
       <div className={styles.modalContent}>
-        <div className="p-4 border-b border-slate-800">
+        <div className={styles.searchHeader}>
           <input
             autoFocus
             type="text"
@@ -599,12 +584,12 @@ const SearchModal = ({ onClose, type, onSelect }: SearchModalProps) => {
           />
         </div>
 
-        <div className="overflow-y-auto flex-1 p-2 space-y-1">
+        <div className={styles.searchResults}>
           {loading && (
-            <div className="text-center py-4 text-slate-400">Searching...</div>
+            <div className={styles.searchingText}>Searching...</div>
           )}
           {!loading && results.length === 0 && term && (
-            <div className="text-center py-8 text-slate-500">
+            <div className={styles.noResultsText}>
               No results found
             </div>
           )}
@@ -632,10 +617,10 @@ const SearchModal = ({ onClose, type, onSelect }: SearchModalProps) => {
                     {type === "players" ? "👤" : "🛡️"}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-200 group-hover:text-white">
+                    <div className={styles.resultName}>
                       {item.name}
                     </div>
-                    <div className="text-xs text-slate-500">{subtitle}</div>
+                    <div className={styles.resultSubtitle}>{subtitle}</div>
                   </div>
                 </button>
               );

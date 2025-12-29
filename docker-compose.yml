@@ -1,0 +1,48 @@
+services:
+  # Database Service
+  mongo:
+    image: mongo:latest
+    container_name: footballlab-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - football-network
+
+  # Backend Service (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: footballlab-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/footballlab
+      - PORT=3000
+    depends_on:
+      - mongo
+    networks:
+      - football-network
+
+  # Frontend Service (React + Vite + Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: footballlab-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - football-network
+
+volumes:
+  mongo-data:
+
+networks:
+  football-network:
+    driver: bridge
+
