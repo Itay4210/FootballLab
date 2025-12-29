@@ -29,7 +29,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Only fetch leagues list initially, not everything
       const leaguesData = await FootballAPI.getLeagues();
       setLeagues(leaguesData);
       setError(null);

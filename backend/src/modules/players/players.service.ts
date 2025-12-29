@@ -134,7 +134,6 @@ export class PlayersService {
   async getPlayerHistory(playerId: string) {
     const playerObjectId = new Types.ObjectId(playerId);
 
-    // Get stats grouped by season
     const statsBySeason = await this.matchModel.aggregate<{
       _id: number;
       goals: number;
@@ -168,7 +167,6 @@ export class PlayersService {
       { $sort: { _id: -1 } },
     ]);
 
-    // Get match counts grouped by season (separate aggregation because unwinding events multiplies matches)
     const matchCounts = await this.matchModel.aggregate<{
       _id: number;
       matches: number;
@@ -187,7 +185,6 @@ export class PlayersService {
       },
     ]);
 
-    // Merge results
     return statsBySeason.map((seasonStats) => {
       const seasonMatchCount = matchCounts.find(
         (m) => m._id === seasonStats._id,

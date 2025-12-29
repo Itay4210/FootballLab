@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Player, PlayerDocument } from '../players/schemas/player.schema';
@@ -12,8 +12,6 @@ import { NAMES_DB } from '../../common/constants/names';
 
 @Injectable()
 export class EvolutionService {
-  private readonly logger = new Logger(EvolutionService.name);
-
   constructor(
     @InjectModel(Player.name) private playerModel: Model<PlayerDocument>,
     @InjectModel(Team.name) private teamModel: Model<TeamDocument>,

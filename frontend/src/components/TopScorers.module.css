@@ -1,0 +1,121 @@
+.container {
+  background-color: rgba(30, 41, 59, 0.3);
+  backdrop-filter: blur(4px);
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.header {
+  background-color: #0f172a;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #334155;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.icon {
+  font-size: 1.25rem;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem;
+  text-align: left;
+  color: #9ca3af;
+  border-collapse: collapse;
+}
+
+.thead {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  background-color: rgba(15, 23, 42, 0.5);
+  color: #6b7280;
+}
+
+.tr {
+  transition: background-color 0.15s ease-in-out;
+  border-bottom: 1px solid #1e293b;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background-color: rgba(30, 41, 59, 0.5);
+}
+
+.th {
+  padding: 0.75rem 1rem;
+  font-weight: normal;
+}
+
+.td {
+  padding: 0.75rem 1rem;
+}
+
+.textRight {
+  text-align: right;
+}
+
+.tdRank {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.playerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.playerName {
+  font-weight: 700;
+  color: white;
+}
+
+.teamName {
+  font-size: 10px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.goals {
+  text-align: right;
+  font-weight: 900;
+  color: var(--color-lab-accent);
+  font-size: 1.125rem;
+}
+
+.noData {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
+.loading {
+  padding: 1.5rem;
+  text-align: center;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  color: var(--color-lab-accent);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
