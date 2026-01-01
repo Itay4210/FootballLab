@@ -171,7 +171,7 @@
 .historyContainer {
   background-color: #0f172a;
   border-radius: 0.5rem;
-  overflow: hidden;
+  overflow-x: auto;
   border: 1px solid #1e293b;
 }
 
