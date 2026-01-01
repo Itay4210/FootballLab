@@ -251,6 +251,7 @@
 
 .mainTableContainer {
   overflow-x: auto;
+
   border-radius: 0.75rem;
   border: 1px solid #334155;
   background-color: rgba(30, 41, 59, 0.3);
@@ -273,17 +274,35 @@
 }
 
 .thMain {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .thMain {
+    padding: 1rem 1.5rem;
+  }
 }
 
 .thMainCenter {
-  padding: 1rem 0.5rem;
+  padding: 0.75rem 0.25rem;
   text-align: center;
 }
 
+@media (min-width: 768px) {
+  .thMainCenter {
+    padding: 1rem 0.5rem;
+  }
+}
+
 .thMainPoints {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 0.5rem;
   text-align: center;
+}
+
+@media (min-width: 768px) {
+  .thMainPoints {
+    padding: 1rem 1.5rem;
+  }
 }
 
 .trMain {
@@ -300,13 +319,25 @@
 }
 
 .tdMainPos {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 0.5rem;
   font-weight: 500;
   color: white;
 }
 
+@media (min-width: 768px) {
+  .tdMainPos {
+    padding: 1rem 1.5rem;
+  }
+}
+
 .tdMainClub {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .tdMainClub {
+    padding: 1rem 1.5rem;
+  }
 }
 
 .qualifiedText {
@@ -330,11 +361,18 @@
 }
 
 .tdMainPoints {
-  padding: 1rem 1.5rem;
+  padding: 0.75rem 0.5rem;
   text-align: center;
   font-weight: 900;
-  font-size: 1.25rem;
+  font-size: 1rem;
   color: var(--color-lab-accent);
+}
+
+@media (min-width: 768px) {
+  .tdMainPoints {
+    padding: 1rem 1.5rem;
+    font-size: 1.25rem;
+  }
 }
 
 .card {
